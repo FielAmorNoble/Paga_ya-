@@ -1,0 +1,36 @@
+# Android / Gradle, cuando se cree el proyecto
+.gradle/
+.kotlin/
+**/build/
+local.properties
+.idea/
+*.iml
+.externalNativeBuild/
+.cxx/
+captures/
+
+# Credenciales y firma
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+keystore.properties
+credentials*.json
+client_secret*.json
+
+# Datos privados y copias reales
+private-data/
+backups/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.pagaya.zip
+
+# Archivos locales
+*.log
+*.tmp
+Thumbs.db
+.DS_Store
