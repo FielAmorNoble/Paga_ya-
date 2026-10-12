@@ -1,6 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Paga Ya!</string>
-    <string name="empty_title">Todavía no hay cuentas</string>
-    <string name="empty_body">Esta versión de desarrollo aún no permite agregar clientes ni registrar fiados o abonos.</string>
+
+    <!-- Comunes -->
+    <string name="action_back">Volver</string>
+    <string name="action_retry">Reintentar</string>
+    <string name="loading">Cargando…</string>
+
+    <!-- Clientes -->
+    <string name="clients_search_label">Buscar cliente</string>
+    <string name="clients_search_clear">Borrar búsqueda</string>
+    <string name="clients_new">Nuevo cliente</string>
+    <string name="clients_empty_title">Aquí verás las cuentas de tus clientes</string>
+    <string name="clients_empty_action">Crear primer cliente</string>
+    <string name="clients_no_results">No encontramos ese nombre</string>
+    <string name="clients_load_error">No pudimos abrir las cuentas</string>
+
+    <!-- Estado de cuenta derivado de los movimientos vigentes -->
+    <string name="account_no_movements">Sin movimientos</string>
+    <string name="account_owes">Debe: %1$s</string>
+    <string name="account_paid">Pagado ✓</string>
+    <string name="account_inconsistent">Revisar cuenta</string>
+
+    <!-- Formulario -->
+    <string name="form_title_new">Nuevo cliente</string>
+    <string name="form_title_edit">Editar cliente</string>
+    <string name="form_name">Nombre</string>
+    <string name="form_name_hint">Obligatorio</string>
+    <string name="form_phone">Teléfono (opcional)</string>
+    <string name="form_note">Nota (opcional)</string>
+    <string name="form_save">Guardar cliente</string>
+    <string name="form_saving">Guardando…</string>
+    <string name="form_error_name_required">Escribe el nombre del cliente</string>
+    <plurals name="form_error_name_too_long">
+        <item quantity="one">El nombre puede tener hasta %1$d carácter</item>
+        <item quantity="other">El nombre puede tener hasta %1$d caracteres</item>
+    </plurals>
+    <plurals name="form_error_phone_too_long">
+        <item quantity="one">El teléfono puede tener hasta %1$d carácter</item>
+        <item quantity="other">El teléfono puede tener hasta %1$d caracteres</item>
+    </plurals>
+    <string name="form_error_phone_invalid">Usa solo números, espacios y los signos + - ( ) .</string>
+    <plurals name="form_error_note_too_long">
+        <item quantity="one">La nota puede tener hasta %1$d carácter</item>
+        <item quantity="other">La nota puede tener hasta %1$d caracteres</item>
+    </plurals>
+    <string name="form_error_save">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
+    <string name="form_error_conflict">Este formulario ya guardó otro cliente. Vuelve a la lista y revisa.</string>
+    <string name="form_error_not_found">Este cliente ya no existe.</string>
+    <string name="form_homonym_warning">Ya tienes un cliente con este nombre. Puedes guardarlo igual; usa el teléfono o la nota para distinguirlos.</string>
+    <string name="form_discard_title">¿Descartar los cambios?</string>
+    <string name="form_discard_text">Lo que escribiste no se ha guardado.</string>
+    <string name="form_discard_confirm">Descartar</string>
+    <string name="form_discard_cancel">Seguir editando</string>
+
+    <!-- Detalle -->
+    <string name="detail_phone">Teléfono</string>
+    <string name="detail_note">Nota</string>
+    <string name="detail_created">Cliente desde %1$s</string>
+    <string name="detail_account">Estado de la cuenta</string>
+    <string name="detail_movements_pending">El registro de fiados y abonos todavía no está disponible en esta versión.</string>
+    <string name="detail_edit">Editar cliente</string>
+    <string name="detail_not_found">No encontramos este cliente.</string>
 </resources>

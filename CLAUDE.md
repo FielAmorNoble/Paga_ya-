@@ -18,6 +18,7 @@ Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, bac
 - Toolchain, versiones y estado del arranque: `docs/12_Arranque_Tecnico.md`
 - Esquema físico Room, restricciones y su verificación: `docs/13_Persistencia_Local.md`
 - Ramas, variantes y entornos: `docs/14_Entornos_Desarrollo.md`
+- Gestión de clientes (estado y pendientes de HU-02/HU-06): `docs/15_Gestion_Clientes.md`
 
 Si un documento contradice a otro o al código, señalarlo antes de cambiar una decisión de producto.
 
@@ -40,6 +41,7 @@ Requiere JDK 17+ en `PATH` o `JAVA_HOME`, y `local.properties` con `sdk.dir` (no
 .\gradlew.bat assembleDebug     # app de desarrollo com.example.pagaya.dev («Paga Ya! Dev»)
 .\gradlew.bat assembleRelease   # app normal com.example.pagaya, sin firma de distribución
 .\gradlew.bat lintDebug         # informe en app/build/reports/lint-results-debug.html
+.\gradlew.bat testDebugUnitTest # pruebas JVM (reglas de dominio)
 .\gradlew.bat assembleDebugAndroidTest   # compila las pruebas instrumentadas
 .\gradlew.bat connectedDebugAndroidTest  # las ejecuta contra com.example.pagaya.dev (verificado en API 35);
                                          # instala y desinstala solo .dev y .dev.test
@@ -69,5 +71,5 @@ Un build incremental con un daemon reutilizado corre con los permisos de ese dae
 - Distinguir siempre: compilación comprobada, ejecución en Android comprobada y pendientes por falta de entorno. No declarar resultados no ejecutados.
 - Cambios de esquema Room incluyen migración y prueba; nunca `fallbackToDestructiveMigration`.
 - Las restricciones adicionales viven en `SchemaConstraints.kt` como triggers que Room no exporta ni migra: toda migración debe dejar exactamente `SchemaConstraints.definitions` (se verifica al abrir).
-- Las escrituras pasan por la capa de datos; ninguna pantalla usa DAOs directamente.
+- Las escrituras pasan por los repositorios (`data/`); las pantallas usan ViewModels y nunca DAOs. Toda escritura de negocio incrementa `revision_datos` en la misma transacción.
 - No hacer commits, pushes ni publicaciones salvo que se pida.

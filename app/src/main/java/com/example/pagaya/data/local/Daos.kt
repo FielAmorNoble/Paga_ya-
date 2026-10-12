@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 // Acceso de bajo nivel de la capa de datos; ninguna pantalla los usa. Las reglas que
 // cruzan filas (saldo, prefijos, revisiones, revision_datos) pertenecen al repositorio.
@@ -19,6 +20,20 @@ interface ClientDao {
 
     @Query("SELECT * FROM cliente WHERE id = :id")
     fun findById(id: String): ClientEntity?
+
+    /** Activos cuyo nombre normalizado contiene [likeFragment] (ya escapado), en orden alfabético estable. */
+    @Query(
+        CLIENT_WITH_ACCOUNT_SELECT +
+            "WHERE c.activo = 1 AND c.nombre_busqueda LIKE '%' || :likeFragment || '%' ESCAPE '\\' " +
+            "GROUP BY c.id ORDER BY c.nombre_busqueda, c.id",
+    )
+    fun observeActive(likeFragment: String): Flow<List<ClientWithAccount>>
+
+    @Query(CLIENT_WITH_ACCOUNT_SELECT + "WHERE c.id = :id GROUP BY c.id")
+    fun observeWithAccount(id: String): Flow<ClientWithAccount?>
+
+    @Query("SELECT COUNT(*) FROM cliente WHERE nombre_busqueda = :searchName AND id != :excludeId")
+    fun countWithSearchName(searchName: String, excludeId: String): Int
 }
 
 @Dao
@@ -49,6 +64,10 @@ interface LedgerMetadataDao {
 
     @Update
     fun update(metadata: LedgerMetadataEntity): Int
+
+    /** Debe ejecutarse en la misma transacción que el cambio de negocio. */
+    @Query("UPDATE libreta_metadata SET revision_datos = revision_datos + 1 WHERE id = 1")
+    fun incrementDataRevision(): Int
 }
 
 @Dao

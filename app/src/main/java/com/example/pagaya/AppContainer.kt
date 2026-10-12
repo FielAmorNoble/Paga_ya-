@@ -1,6 +1,7 @@
 package com.example.pagaya
 
 import android.content.Context
+import com.example.pagaya.data.ClientRepository
 import com.example.pagaya.data.local.PagaYaDatabase
 import java.time.Clock
 import java.util.UUID
@@ -15,4 +16,6 @@ class AppContainer(context: Context) {
     val database: PagaYaDatabase by lazy {
         PagaYaDatabase.build(appContext, PagaYaDatabase.FILE_NAME, clock) { UUID.randomUUID().toString() }
     }
+
+    val clientRepository: ClientRepository by lazy { ClientRepository(database, clock) }
 }
