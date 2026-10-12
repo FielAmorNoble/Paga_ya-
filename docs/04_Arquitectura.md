@@ -78,9 +78,9 @@ SQLite del sistema puede variar entre versiones Android: evitar SQL reciente sin
 
 ## Estructura del repositorio
 
-Estructura presente: README, convenciones de texto, reglas de exclusión y `docs/`. No se crean carpetas vacías ni archivos Kotlin que sugieran una app funcional.
+Estructura presente (2026-10-06): proyecto Gradle con wrapper y catálogo, módulo `app` con `MainActivity` y tema; detalle en [12 — Arranque técnico](12_Arranque_Tecnico.md). No se crean carpetas vacías ni archivos Kotlin que sugieran funciones inexistentes.
 
-Estructura futura en fase 1:
+Estructura objetivo de fase 1, que se completará por incrementos:
 
 ```text
 Paga_ya/

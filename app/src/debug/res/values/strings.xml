@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Solo variante debug (com.example.pagaya.dev): distingue la app de desarrollo en el teléfono. -->
+<resources>
+    <string name="app_name">Paga Ya! Dev</string>
+</resources>

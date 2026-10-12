@@ -1,6 +1,6 @@
 # 03 — Modelo de datos y reglas de integridad
 
-Este documento define el modelo lógico. Las migraciones y entidades Room se escribirán durante el desarrollo. No se ha creado una base de datos.
+Este documento define el modelo lógico. El esquema físico Room versión 1 y sus decisiones adicionales están en [13 — Persistencia local](13_Persistencia_Local.md).
 
 ## Convenciones
 

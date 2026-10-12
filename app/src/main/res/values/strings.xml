@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Paga Ya!</string>
+    <string name="empty_title">Todavía no hay cuentas</string>
+    <string name="empty_body">Esta versión de desarrollo aún no permite agregar clientes ni registrar fiados o abonos.</string>
+</resources>

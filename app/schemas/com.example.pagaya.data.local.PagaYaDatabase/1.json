@@ -1,0 +1,425 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "6c9ad4064d7a689352d698537a3cb332",
+    "entities": [
+      {
+        "tableName": "cliente",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `nombre` TEXT NOT NULL, `nombre_busqueda` TEXT NOT NULL, `telefono` TEXT, `nota` TEXT, `creado_en` INTEGER NOT NULL, `modificado_en` INTEGER NOT NULL, `activo` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "nombre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "searchName",
+            "columnName": "nombre_busqueda",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phone",
+            "columnName": "telefono",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "nota",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "creado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAtMillis",
+            "columnName": "modificado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "active",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_cliente_activo_nombre_busqueda_id",
+            "unique": false,
+            "columnNames": [
+              "activo",
+              "nombre_busqueda",
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_cliente_activo_nombre_busqueda_id` ON `${TABLE_NAME}` (`activo`, `nombre_busqueda`, `id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "movimiento",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `cliente_id` TEXT NOT NULL, `fecha` TEXT NOT NULL, `orden_registro` INTEGER NOT NULL, `tipo` TEXT NOT NULL, `valor_cop` INTEGER NOT NULL, `descripcion` TEXT, `origen` TEXT NOT NULL, `creado_en` INTEGER NOT NULL, `modificado_en` INTEGER NOT NULL, `activo` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`cliente_id`) REFERENCES `cliente`(`id`) ON UPDATE RESTRICT ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "clientId",
+            "columnName": "cliente_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "fecha",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entryOrder",
+            "columnName": "orden_registro",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "tipo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountCop",
+            "columnName": "valor_cop",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "descripcion",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "origin",
+            "columnName": "origen",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "creado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAtMillis",
+            "columnName": "modificado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "active",
+            "columnName": "activo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "version",
+            "columnName": "version",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_movimiento_cliente_id_fecha_orden_registro",
+            "unique": false,
+            "columnNames": [
+              "cliente_id",
+              "fecha",
+              "orden_registro"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_movimiento_cliente_id_fecha_orden_registro` ON `${TABLE_NAME}` (`cliente_id`, `fecha`, `orden_registro`)"
+          },
+          {
+            "name": "index_movimiento_orden_registro",
+            "unique": true,
+            "columnNames": [
+              "orden_registro"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_movimiento_orden_registro` ON `${TABLE_NAME}` (`orden_registro`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "cliente",
+            "onDelete": "RESTRICT",
+            "onUpdate": "RESTRICT",
+            "columns": [
+              "cliente_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "movimiento_revision",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `movimiento_id` TEXT NOT NULL, `version_anterior` INTEGER NOT NULL, `version_nueva` INTEGER NOT NULL, `accion` TEXT NOT NULL, `estado_anterior_json` TEXT NOT NULL, `cambiado_en` INTEGER NOT NULL, `motivo` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`movimiento_id`) REFERENCES `movimiento`(`id`) ON UPDATE RESTRICT ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "movementId",
+            "columnName": "movimiento_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousVersion",
+            "columnName": "version_anterior",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "newVersion",
+            "columnName": "version_nueva",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "action",
+            "columnName": "accion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "previousStateJson",
+            "columnName": "estado_anterior_json",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changedAtMillis",
+            "columnName": "cambiado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "motivo",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_movimiento_revision_movimiento_id_version_anterior",
+            "unique": true,
+            "columnNames": [
+              "movimiento_id",
+              "version_anterior"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_movimiento_revision_movimiento_id_version_anterior` ON `${TABLE_NAME}` (`movimiento_id`, `version_anterior`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "movimiento",
+            "onDelete": "RESTRICT",
+            "onUpdate": "RESTRICT",
+            "columns": [
+              "movimiento_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "libreta_metadata",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `libreta_id` TEXT NOT NULL, `revision_datos` INTEGER NOT NULL, `siguiente_orden_registro` INTEGER NOT NULL, `creado_en` INTEGER NOT NULL, `epoca_local` TEXT NOT NULL, `ultima_restauracion_id` TEXT, `ultima_restauracion_en` INTEGER, `copia_recuperacion_localizador` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ledgerId",
+            "columnName": "libreta_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataRevision",
+            "columnName": "revision_datos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextEntryOrder",
+            "columnName": "siguiente_orden_registro",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtMillis",
+            "columnName": "creado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localEpoch",
+            "columnName": "epoca_local",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastRestoreId",
+            "columnName": "ultima_restauracion_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastRestoreAtMillis",
+            "columnName": "ultima_restauracion_en",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "recoveryCopyLocator",
+            "columnName": "copia_recuperacion_localizador",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "backup_registro",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`backup_id` TEXT NOT NULL, `destino` TEXT NOT NULL, `libreta_id` TEXT NOT NULL, `epoca_local` TEXT NOT NULL, `revision_datos` INTEGER NOT NULL, `capturado_en` INTEGER NOT NULL, `estado` TEXT NOT NULL, `verificado_en` INTEGER, `localizador` TEXT, `cuenta_drive_huella` TEXT, `error_codigo` TEXT, PRIMARY KEY(`backup_id`, `destino`))",
+        "fields": [
+          {
+            "fieldPath": "backupId",
+            "columnName": "backup_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destination",
+            "columnName": "destino",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ledgerId",
+            "columnName": "libreta_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "localEpoch",
+            "columnName": "epoca_local",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataRevision",
+            "columnName": "revision_datos",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAtMillis",
+            "columnName": "capturado_en",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "estado",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "verifiedAtMillis",
+            "columnName": "verificado_en",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "locator",
+            "columnName": "localizador",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "driveAccountFingerprint",
+            "columnName": "cuenta_drive_huella",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "errorCode",
+            "columnName": "error_codigo",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "backup_id",
+            "destino"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6c9ad4064d7a689352d698537a3cb332')"
+    ]
+  }
+}

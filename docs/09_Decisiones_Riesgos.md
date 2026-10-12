@@ -30,7 +30,7 @@ Detalles y referencias: [arquitectura](04_Arquitectura.md), [modelo](03_Modelo_D
 
 | ID | Dato desconocido | Supuesto de trabajo | Responsable / momento |
 | --- | --- | --- | --- |
-| VP-01 | Modelo/Android/espacio del teléfono | API 26+, 2 GB RAM, servicios Google disponibles | Desarrollador y usuaria, fase 0 |
+| VP-01 | Modelo/Android/espacio del teléfono | API 26+, 2 GB RAM, servicios Google disponibles. **Parcialmente resuelta (2026-10-12):** ver nota | Desarrollador y usuaria, fase 0 |
 | VP-02 | Experiencia del mantenedor | No hay preferencia tecnológica declarada | Desarrollador, antes de crear proyecto |
 | VP-03 | Importe máximo y significado de ventas de contado | Máximo preventivo por movimiento y contado fuera de libreta | Usuaria, fase 0 |
 | VP-04 | Cuenta Google y custodia de acceso | Cuenta de la persona responsable del negocio | Propietario, fase 0/6 |
@@ -38,6 +38,21 @@ Detalles y referencias: [arquitectura](04_Arquitectura.md), [modelo](03_Modelo_D
 | VP-06 | Requisitos vigentes OAuth/distribución | Verificar con firma y cuenta destinataria, sin prometer exenciones | Desarrollador, fase 0/8 |
 | VP-07 | Exactitud de deuda inicial | Conciliación contra libreta con fecha de corte | Usuaria, fase 8 |
 | VP-08 | Custodia de exportaciones y frecuencia | Copia al cierre de jornada con cambios | Usuaria, piloto y entrega |
+
+**VP-01, datos recibidos el 2026-10-12** (informados por el propietario, no medidos con herramientas):
+
+| Dato | Valor |
+| --- | --- |
+| Teléfono | Xiaomi Redmi Note 14 Pro, modelo 24090RA29G |
+| Android | 16 (API 36) |
+| Espacio libre | ≈ 99,7 GB |
+| RAM | Sin informar |
+| Google Play services | Sin informar (necesario para Drive en fase 6) |
+
+- Android 16 cumple el mínimo provisional API 26. No se modifica `minSdk`.
+- La API del teléfono coincide con el `targetSdk` 36 actual.
+- **No se ha ejecutado ninguna prueba en este teléfono.** Siguen pendientes: instalación, pruebas de persistencia, exclusiones de respaldo del sistema (T-37) y recorridos con la usuaria.
+- El Motorola moto g84 5G (Android 15) usado hasta ahora es del desarrollador, no de la usuaria.
 
 Los supuestos permiten cerrar el análisis sin bloquearlo. Una validación pendiente no equivale a aceptación del usuario ni a una prueba superada.
 
