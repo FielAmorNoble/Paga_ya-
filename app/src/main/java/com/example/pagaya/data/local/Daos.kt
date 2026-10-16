@@ -46,6 +46,13 @@ interface MovementDao {
 
     @Query("SELECT * FROM movimiento WHERE id = :id")
     fun findById(id: String): MovementEntity?
+
+    /** Movimientos vigentes de una cuenta, en el orden de cálculo `(fecha, orden_registro)`. */
+    @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId AND activo = 1 ORDER BY fecha, orden_registro")
+    fun findActiveByClient(clientId: String): List<MovementEntity>
+
+    @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId AND activo = 1 ORDER BY fecha, orden_registro")
+    fun observeActiveByClient(clientId: String): Flow<List<MovementEntity>>
 }
 
 @Dao
@@ -68,6 +75,10 @@ interface LedgerMetadataDao {
     /** Debe ejecutarse en la misma transacción que el cambio de negocio. */
     @Query("UPDATE libreta_metadata SET revision_datos = revision_datos + 1 WHERE id = 1")
     fun incrementDataRevision(): Int
+
+    /** Consume el orden de registro leído con [get]; debe ir en la misma transacción que el alta. */
+    @Query("UPDATE libreta_metadata SET siguiente_orden_registro = siguiente_orden_registro + 1 WHERE id = 1")
+    fun advanceEntryOrder(): Int
 }
 
 @Dao

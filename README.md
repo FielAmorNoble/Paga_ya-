@@ -2,15 +2,15 @@
 
 Una libreta digital de cuentas por cliente para un pequeño emprendimiento familiar en Colombia.
 
-**Estado: gestión básica de clientes en desarrollo, 12 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar y editar clientes, que se guardan en el teléfono. **Todavía no se pueden registrar fiados, abonos ni pagos, ni hacer respaldos.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
+**Estado: clientes, movimientos, saldo e historial en desarrollo, 12 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar y editar clientes; registrar fiados, abonos y el pago del saldo completo; y ver el saldo y el historial. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden editar ni anular movimientos, archivar clientes ni hacer respaldos; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
 
 | | Estado |
 | --- | --- |
 | Proyecto Gradle, APK debug y Android Lint | Implementado y comprobado en Windows |
 | Clientes: crear, listar, buscar sin distinguir mayúsculas ni acentos, consultar y editar (HU-02 y HU-06, parciales) | Implementado; probado en el teléfono del desarrollador (Android 15). Falta archivar/reactivar y la vista «Archivados». Ver [15](docs/15_Gestion_Clientes.md) |
 | Base local Room v1: tablas, restricciones, metadata inicial | Implementada; 21 pruebas instrumentadas correctas en un teléfono con Android 15 (API 35); pendiente API 26. Ver [13](docs/13_Persistencia_Local.md) |
-| Repositorio financiero (saldo, prefijos, revisiones) | Planificado |
-| Fiados, abonos, pagos, saldo registrable e historial | Planificado. Hoy cada cliente muestra «Sin movimientos», derivado por consulta |
+| Movimientos: fiado, abono y pago completo; saldo derivado; historial con saldo por movimiento (HU-01, HU-03, HU-04, HU-05 y HU-07 en su parte de registro y lectura) | Implementado; 71 pruebas instrumentales y 30 JVM correctas; recorrido manual en el teléfono del desarrollador (Android 15). Ver [16](docs/16_Movimientos_Saldo_Historial.md) |
+| Corrección y anulación de movimientos con revisiones (HU-08) | Planificado; el esquema ya lo admite |
 | Exportación, restauración y Google Drive | Planificado (Drive forma parte de V1) |
 
 La V1 permitirá registrar fiados, abonos y pagos, consultar cuánto debe cada cliente y recuperar la información desde un respaldo. Funcionará sin Internet; Google Drive se utilizará únicamente para copias autorizadas.
@@ -46,6 +46,7 @@ Estas decisiones son la propuesta técnica del proyecto. Sus supuestos, límites
 | [13 — Persistencia local](docs/13_Persistencia_Local.md) | Modelo físico Room, restricciones, inicialización, pruebas y límites de verificación |
 | [14 — Ramas y entornos](docs/14_Entornos_Desarrollo.md) | Política main/develop, variantes debug (.dev) y release, verificaciones |
 | [15 — Gestión de clientes](docs/15_Gestion_Clientes.md) | Recorrido de clientes, reglas, pruebas, recorrido en el teléfono y pendientes |
+| [16 — Movimientos, saldo e historial](docs/16_Movimientos_Saldo_Historial.md) | Registro de fiados, abonos y pago completo; reglas, decisiones, pruebas, pendientes y pasos para probar en el teléfono |
 
 Se conservan los nueve documentos solicitados. Se agregan tres anexos para que decisiones, pruebas y fuentes puedan mantenerse sin sobrecargar el plan de implementación. Este índice es el punto de entrada; cada regla tiene un documento responsable.
 

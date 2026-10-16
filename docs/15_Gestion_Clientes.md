@@ -1,6 +1,6 @@
 # 15 — Gestión básica de clientes
 
-Fecha: 2026-10-12. Iteración 04, en `develop`.
+Fecha: 2026-10-12. Iteración 04, en `develop`. Commit local `b17c17b`. La iteración 05 amplió la cuenta con saldo, historial y movimientos: ver [16](16_Movimientos_Saldo_Historial.md). El texto «El registro de fiados y abonos todavía no está disponible» y el botón «Editar cliente» al pie de la cuenta de esta iteración ya no existen: ahora hay una acción «Editar» en el encabezado y los datos del cliente están en el diálogo del botón ⓘ (ver «Ajuste de UX» en el doc 16).
 
 **Objetivo:** primer recorrido utilizable: abrir «Paga Ya! Dev», crear un cliente, encontrarlo, consultar y editar sus datos, y conservarlos al cerrar y volver a abrir.
 

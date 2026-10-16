@@ -54,12 +54,110 @@
     <string name="form_discard_confirm">Descartar</string>
     <string name="form_discard_cancel">Seguir editando</string>
 
-    <!-- Detalle -->
+    <!-- Cuenta del cliente -->
     <string name="detail_phone">Teléfono</string>
-    <string name="detail_note">Nota</string>
     <string name="detail_created">Cliente desde %1$s</string>
-    <string name="detail_account">Estado de la cuenta</string>
-    <string name="detail_movements_pending">El registro de fiados y abonos todavía no está disponible en esta versión.</string>
     <string name="detail_edit">Editar cliente</string>
+    <string name="detail_edit_action">Editar</string>
+    <string name="detail_info_description">Información del cliente</string>
+    <string name="info_title">Información del cliente</string>
+    <string name="info_name">Nombre</string>
+    <string name="info_no_phone">Sin teléfono</string>
+    <string name="info_note_label">Nota del cliente</string>
+    <string name="info_no_note">Sin nota</string>
+    <string name="info_copy_phone">Copiar teléfono</string>
+    <string name="info_phone_copied">Teléfono copiado</string>
+    <string name="info_close">Cerrar</string>
     <string name="detail_not_found">No encontramos este cliente.</string>
+    <string name="detail_balance_label">Saldo pendiente</string>
+    <string name="detail_balance_description">Saldo pendiente: %1$s pesos</string>
+    <string name="detail_paid_description">Saldo pendiente: cero pesos. Cuenta pagada</string>
+    <string name="movement_add_fiado">+ Fiado</string>
+    <string name="movement_add_abono">+ Abono</string>
+    <string name="movement_no_balance">No hay saldo pendiente</string>
+    <string name="movement_pay_full">Pagar saldo completo</string>
+
+    <!-- Avisos tras guardar -->
+    <string name="saved_fiado">Fiado guardado</string>
+    <string name="saved_abono">Abono guardado</string>
+    <string name="saved_payment">Pago registrado</string>
+
+    <!-- Historial -->
+    <string name="history_title">Historial</string>
+    <string name="history_empty">Todavía no hay fiados ni abonos. Usa «+ Fiado» para registrar el primero.</string>
+    <string name="history_fiado">Fiado</string>
+    <string name="history_abono">✓ Abono</string>
+    <string name="history_payment">✓ Pago completo</string>
+    <string name="history_balance_after">Saldo después: %1$s</string>
+    <string name="history_a11y_fiado">Fiado de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
+    <string name="history_a11y_abono">Abono de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
+    <string name="history_a11y_payment">Pago completo de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
+    <string name="history_a11y_note">Nota: %1$s.</string>
+    <string-array name="months_short">
+        <item>ene</item>
+        <item>feb</item>
+        <item>mar</item>
+        <item>abr</item>
+        <item>may</item>
+        <item>jun</item>
+        <item>jul</item>
+        <item>ago</item>
+        <item>sep</item>
+        <item>oct</item>
+        <item>nov</item>
+        <item>dic</item>
+    </string-array>
+
+    <!-- Formulario de movimiento -->
+    <string name="movement_title_fiado">Registrar fiado</string>
+    <string name="movement_title_abono">Registrar abono</string>
+    <string name="movement_amount">Valor</string>
+    <string name="movement_amount_prefix">$</string>
+    <string name="movement_amount_hint">Pesos completos, por ejemplo 20000</string>
+    <string name="movement_amount_preview">Vas a registrar: %1$s</string>
+    <string name="movement_date">Fecha</string>
+    <string name="movement_date_change">Cambiar</string>
+    <string name="movement_date_change_description">Cambiar la fecha, ahora %1$s</string>
+    <string name="movement_date_confirm">Aceptar</string>
+    <string name="movement_date_cancel">Cancelar</string>
+    <string name="movement_note">Nota (opcional)</string>
+    <string name="movement_save_fiado">Guardar fiado</string>
+    <string name="movement_save_abono">Guardar abono</string>
+    <string name="movement_error_amount_not_positive">Escribe un valor mayor que cero</string>
+    <string name="movement_error_amount_not_whole">Escribe el valor en pesos completos, sin centavos. Por ejemplo: 20000 o 20.000</string>
+    <string name="movement_error_amount_invalid">Escribe solo números. Por ejemplo: 20000 o 20.000</string>
+    <string name="movement_error_amount_too_large">El valor máximo por movimiento es %1$s</string>
+    <string name="movement_error_no_debt">Este cliente no tiene saldo pendiente, así que no se puede registrar un abono</string>
+    <string name="movement_error_exceeds_balance">El abono supera lo que debe: %1$s</string>
+    <string name="movement_error_date_insufficient">En esa fecha aún no había deuda suficiente. Revisa la fecha o los movimientos anteriores</string>
+    <string name="movement_error_date_breaks_later">Con esa fecha, un abono posterior quedaría sin deuda que lo cubra. Revisa la fecha o los movimientos anteriores</string>
+    <string name="movement_error_overflow">La cuenta llegaría a un valor demasiado grande. Revisa el valor</string>
+    <string name="movement_error_date_future">La fecha no puede ser posterior a hoy</string>
+    <string name="movement_error_date_too_old">La fecha no puede ser anterior al 1 de enero de 1900</string>
+    <plurals name="movement_error_note_too_long">
+        <item quantity="one">La nota puede tener hasta %1$d carácter</item>
+        <item quantity="other">La nota puede tener hasta %1$d caracteres</item>
+    </plurals>
+    <string name="movement_error_save">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
+    <string name="movement_error_conflict">Este formulario ya guardó otro movimiento. Vuelve a la cuenta y revisa.</string>
+    <string name="movement_error_client_not_found">Este cliente ya no existe.</string>
+    <string name="movement_error_client_archived">Este cliente está archivado y no admite movimientos nuevos.</string>
+
+    <!-- Pago de saldo completo -->
+    <string name="pay_full_title">Pagar saldo completo</string>
+    <string name="pay_full_text">Registrar pago de %1$s de %2$s.</string>
+    <string name="pay_full_note">Solo se anota un pago que ya recibiste; la app no cobra dinero.</string>
+    <string name="pay_full_confirm">Confirmar pago</string>
+    <string name="pay_full_cancel">Cancelar</string>
+    <string name="pay_full_saving">Guardando…</string>
+    <string name="pay_full_changed_title">El saldo cambió</string>
+    <string name="pay_full_changed_owes">Ahora %1$s debe %2$s. No se guardó ningún pago. Revisa el importe y vuelve a pagar el saldo completo.</string>
+    <string name="pay_full_changed_paid">%1$s ya no tiene saldo pendiente. No se guardó ningún pago.</string>
+    <string name="pay_full_changed_review">Revisar</string>
+    <string name="pay_full_too_large_title">Saldo demasiado grande para un solo pago</string>
+    <string name="pay_full_too_large_text">El saldo de %1$s supera el máximo de %2$s por movimiento. Regístralo en varios abonos.</string>
+    <string name="pay_full_too_large_ok">Entendido</string>
+    <string name="pay_full_error_save">No se pudo guardar. Inténtalo de nuevo.</string>
+    <string name="pay_full_error_dates">No se pudo registrar el pago con la fecha de hoy. Revisa las fechas de los movimientos.</string>
+    <string name="pay_full_error_unavailable">No se pudo registrar el pago. Vuelve a la cuenta y revisa.</string>
 </resources>

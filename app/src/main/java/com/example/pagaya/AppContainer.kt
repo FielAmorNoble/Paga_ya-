@@ -2,6 +2,7 @@ package com.example.pagaya
 
 import android.content.Context
 import com.example.pagaya.data.ClientRepository
+import com.example.pagaya.data.MovementRepository
 import com.example.pagaya.data.local.PagaYaDatabase
 import java.time.Clock
 import java.util.UUID
@@ -18,4 +19,6 @@ class AppContainer(context: Context) {
     }
 
     val clientRepository: ClientRepository by lazy { ClientRepository(database, clock) }
+
+    val movementRepository: MovementRepository by lazy { MovementRepository(database, clock) }
 }

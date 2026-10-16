@@ -8,6 +8,7 @@ import org.junit.Assert.fail
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.UUID
 
@@ -31,6 +32,13 @@ internal class TestDatabaseFile {
     companion object {
         val FIXED_CLOCK: Clock = Clock.fixed(Instant.parse("2026-10-05T15:00:00Z"), ZoneOffset.UTC)
     }
+}
+
+/** Reloj controlable para comprobar instantes de creación y modificación y el «hoy» de Bogotá. */
+internal class MutableClock(var millis: Long) : Clock() {
+    override fun getZone(): ZoneId = ZoneOffset.UTC
+    override fun withZone(zone: ZoneId?): Clock = this
+    override fun instant(): Instant = Instant.ofEpochMilli(millis)
 }
 
 internal fun randomId(): String = UUID.randomUUID().toString()

@@ -19,6 +19,7 @@ Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, bac
 - Esquema físico Room, restricciones y su verificación: `docs/13_Persistencia_Local.md`
 - Ramas, variantes y entornos: `docs/14_Entornos_Desarrollo.md`
 - Gestión de clientes (estado y pendientes de HU-02/HU-06): `docs/15_Gestion_Clientes.md`
+- Movimientos, saldo e historial (reglas, decisiones, pruebas, pendientes): `docs/16_Movimientos_Saldo_Historial.md`
 
 Si un documento contradice a otro o al código, señalarlo antes de cambiar una decisión de producto.
 
@@ -63,6 +64,7 @@ Un build incremental con un daemon reutilizado corre con los permisos de ese dae
 - Ambas ramas conservan pruebas, documentación y `app/schemas`. Las pruebas se empaquetan en un APK aparte y no entran en la app final.
 - Las pruebas instrumentadas usan solo la variante debug (`com.example.pagaya.dev`). Nunca desinstalar ni borrar datos de `com.example.pagaya` ni instalar el APK release en un teléfono sin una decisión explícita.
 - Antes de ejecutar pruebas en un dispositivo, listar los paquetes `pagaya` instalados.
+- `connectedDebugAndroidTest` desinstala `com.example.pagaya.dev` al terminar y con ello **borra sus datos** (los clientes ficticios de la usuaria). Si la app Dev tiene datos, usar `adb install -r` de ambos APK y `adb shell am instrument -w com.example.pagaya.dev.test/androidx.test.runner.AndroidJUnitRunner` (ver `docs/16`), y desinstalar solo `.dev.test`.
 - No usar `reset --hard`, `clean`, force push ni borrar ramas para ordenar el repositorio.
 
 ## Forma de trabajo

@@ -1,6 +1,7 @@
 package com.example.pagaya.ui.common
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -13,18 +14,42 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.pagaya.R
 import com.example.pagaya.data.local.ClientWithAccount
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 /** Pesos colombianos enteros con agrupación por puntos: 45000 → "$45.000". */
 fun formatCop(value: Long): String {
     val digits = kotlin.math.abs(value).toString().reversed().chunked(3).joinToString(".").reversed()
     return (if (value < 0) "-$" else "$") + digits
 }
+
+/** Importe con signo explícito para el historial: fiado «+$60.000», abono «−$15.000» (signo menos U+2212). */
+fun formatSignedCop(amountCop: Long, positive: Boolean): String = (if (positive) "+" else "−") + formatCop(amountCop)
+
+/** Fecha numérica de los formularios: 05/10/2026. */
+fun formatDayNumeric(date: LocalDate): String = NUMERIC_DAY.format(date)
+
+/** Fecha completa para lectores de pantalla: «5 de octubre de 2026». */
+fun formatDayLong(date: LocalDate): String = LONG_DAY.format(date)
+
+/** Fecha breve del historial: «5 oct 2026». */
+@Composable
+fun formatDayShort(date: LocalDate): String =
+    "${date.dayOfMonth} ${stringArrayResource(R.array.months_short)[date.monthValue - 1]} ${date.year}"
+
+private val SPANISH_COLOMBIA: Locale = Locale.forLanguageTag("es-CO")
+private val NUMERIC_DAY: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+private val LONG_DAY: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(SPANISH_COLOMBIA)
 
 /** Texto del estado de cuenta, derivado de los movimientos vigentes (HU-06). */
 @Composable
@@ -36,9 +61,17 @@ fun accountStatusText(account: ClientWithAccount): String = when {
     else -> stringResource(R.string.account_inconsistent)
 }
 
-/** Encabezado de pantalla secundaria con acción «Volver» accesible; respeta la barra de estado (edge-to-edge). */
+/**
+ * Encabezado de pantalla secundaria con acción «Volver» accesible; respeta la barra de estado
+ * (edge-to-edge). [actions] ocupa el extremo derecho.
+ */
 @Composable
-fun ScreenHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ScreenHeader(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
     Row(
         modifier = modifier.fillMaxWidth().statusBarsPadding().heightIn(min = 56.dp).padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -49,7 +82,10 @@ fun ScreenHeader(title: String, onBack: () -> Unit, modifier: Modifier = Modifie
         Text(
             text = title,
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.semantics { heading() },
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f).semantics { heading() },
         )
+        actions()
     }
 }

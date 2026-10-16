@@ -2,6 +2,7 @@ package com.example.pagaya.data
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.pagaya.data.local.MovementType
+import com.example.pagaya.data.local.MutableClock
 import com.example.pagaya.data.local.PagaYaDatabase
 import com.example.pagaya.data.local.TestDatabaseFile
 import com.example.pagaya.data.local.movement
@@ -16,17 +17,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
-
-/** Reloj controlable para comprobar instantes de creación y modificación. */
-private class MutableClock(var millis: Long) : Clock() {
-    override fun getZone(): ZoneId = ZoneOffset.UTC
-    override fun withZone(zone: ZoneId?): Clock = this
-    override fun instant(): Instant = Instant.ofEpochMilli(millis)
-}
 
 @RunWith(AndroidJUnit4::class)
 class ClientRepositoryTest {
