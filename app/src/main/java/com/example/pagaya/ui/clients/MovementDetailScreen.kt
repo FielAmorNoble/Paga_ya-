@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -58,6 +59,7 @@ import com.example.pagaya.ui.common.formatDateTime
 import com.example.pagaya.ui.common.formatDayLong
 import com.example.pagaya.ui.common.formatDayShort
 import com.example.pagaya.ui.common.formatSignedCop
+import kotlinx.coroutines.launch
 
 @Composable
 fun MovementDetailScreen(
@@ -77,16 +79,18 @@ fun MovementDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val correctionSaved = stringResource(R.string.saved_correction)
     val annulledMessage = stringResource(R.string.saved_annulled)
+    // Consumir el aviso cambia la clave del efecto: el snackbar va en un scope que no se cancela por eso.
+    val snackbarScope = rememberCoroutineScope()
     LaunchedEffect(savedMessage) {
         if (savedMessage == SAVED_CORRECTION) {
             onSavedMessageShown()
-            snackbarHostState.showSnackbar(correctionSaved)
+            snackbarScope.launch { snackbarHostState.showSnackbar(correctionSaved) }
         }
     }
     LaunchedEffect(annulled) {
         if (annulled) {
             viewModel.consumeAnnulled()
-            snackbarHostState.showSnackbar(annulledMessage)
+            snackbarScope.launch { snackbarHostState.showSnackbar(annulledMessage) }
         }
     }
 
@@ -216,6 +220,14 @@ private fun MovementContent(loaded: MovementDetailState.Loaded, onViewChanges: (
         Field(stringResource(R.string.movement_detail_status), statusLabel(movement.active))
         Field(stringResource(R.string.movement_detail_created), formatDateTime(movement.createdAtMillis))
         Field(stringResource(R.string.movement_detail_modified), formatDateTime(movement.modifiedAtMillis))
+        if (!loaded.account.client.active) {
+            // Sin «Corregir» ni «Anular»: se explica por qué en lugar de ocultarlo sin más.
+            Text(
+                stringResource(R.string.movement_detail_client_archived),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (loaded.revisionCount > 0) {
             OutlinedButton(onClick = onViewChanges, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(stringResource(R.string.movement_action_changes), style = MaterialTheme.typography.titleMedium)
@@ -260,6 +272,7 @@ private fun AnnulDialog(
                 AnnulFailure.SAVE_FAILED -> R.string.annul_error_save
                 AnnulFailure.VERSION_CONFLICT -> R.string.annul_error_version
                 AnnulFailure.ALREADY_ANNULLED -> R.string.annul_error_already
+                AnnulFailure.CLIENT_ARCHIVED -> R.string.movement_error_client_archived_change
                 AnnulFailure.UNAVAILABLE -> R.string.annul_error_unavailable
             },
         )

@@ -166,6 +166,7 @@ class MovementEditViewModel(
         val expected = saved.get<Long>(EXPECTED_VERSION) ?: movement.version.also { saved[EXPECTED_VERSION] = it }
         val failure = when {
             !movement.active -> EditFailure.ALREADY_ANNULLED
+            !account.client.active -> EditFailure.CLIENT_ARCHIVED
             movement.version != expected -> EditFailure.VERSION_CONFLICT
             else -> null
         }
@@ -314,7 +315,7 @@ class MovementEditViewModel(
         copy(amountError = errors.amount, dateError = errors.date, descriptionError = errors.description, reasonError = errors.reason)
 
     private fun EditFailure?.blocksEditing() = this == EditFailure.NOT_FOUND || this == EditFailure.ALREADY_ANNULLED ||
-        this == EditFailure.VERSION_CONFLICT
+        this == EditFailure.VERSION_CONFLICT || this == EditFailure.CLIENT_ARCHIVED
 
     // Mientras se evalúa o se muestra la vista previa, el formulario no cambia: lo mostrado es lo que se confirma.
     private inline fun edit(key: String, value: String, change: MovementEditState.() -> MovementEditState) {

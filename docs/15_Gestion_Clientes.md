@@ -4,7 +4,7 @@ Fecha: 2026-10-12. Iteración 04, en `develop`. Commit local `b17c17b`. La itera
 
 **Objetivo:** primer recorrido utilizable: abrir «Paga Ya! Dev», crear un cliente, encontrarlo, consultar y editar sus datos, y conservarlos al cerrar y volver a abrir.
 
-**Alcance pendiente:**
+**Alcance pendiente:** (actualizado en la iteración 07: archivar, reactivar y «Archivados» ya existen; ver [18](18_Archivo_Clientes.md))
 - **HU-02 no está completa:** faltan archivar y reactivar (criterio 6).
 - **HU-06 no está completa:** falta la vista «Archivados».
 - No hay movimientos, saldos registrables, historial, respaldo ni Drive.

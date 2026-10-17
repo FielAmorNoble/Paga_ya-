@@ -15,6 +15,30 @@
     <string name="clients_empty_action">Crear primer cliente</string>
     <string name="clients_no_results">No encontramos ese nombre</string>
     <string name="clients_load_error">No pudimos abrir las cuentas</string>
+    <string name="menu_more">Más opciones</string>
+
+    <!-- Archivados -->
+    <string name="archived_title">Archivados</string>
+    <string name="archived_explanation">Clientes que ya no usas. Conservan su información y su historial, y puedes reactivarlos.</string>
+    <string name="archived_empty">No tienes clientes archivados</string>
+    <string name="archived_badge">Cliente archivado</string>
+    <string name="archived_account_note">No aparece en la lista principal y no admite fiados, abonos ni correcciones. Su información y su historial se conservan.</string>
+    <string name="archive_action">Archivar cliente</string>
+    <string name="archive_confirm_title">¿Archivar a %1$s?</string>
+    <string name="archive_confirm_text">Dejará de aparecer en la lista de clientes. Su información y su historial se conservan, y puedes reactivarlo cuando quieras desde «Archivados».</string>
+    <string name="archive_confirm">Archivar</string>
+    <string name="archive_saving">Archivando…</string>
+    <string name="archive_cancel">Cancelar</string>
+    <string name="archive_error">No se pudo archivar. Inténtalo de nuevo.</string>
+    <string name="archive_done">%1$s quedó archivado. Lo encuentras en «Archivados».</string>
+    <string name="archive_debt_title">Todavía tiene saldo pendiente</string>
+    <string name="archive_debt_text">%1$s debe %2$s. Solo se puede archivar un cliente sin deuda: primero debe quedar saldada.</string>
+    <string name="archive_inconsistent_text">El saldo de esta cuenta no está en cero. Revisa sus movimientos antes de archivarla.</string>
+    <string name="archive_debt_ok">Entendido</string>
+    <string name="reactivate_action">Reactivar cliente</string>
+    <string name="reactivate_saving">Reactivando…</string>
+    <string name="reactivate_error">No se pudo reactivar. Inténtalo de nuevo.</string>
+    <string name="reactivate_done">Cliente reactivado</string>
 
     <!-- Estado de cuenta derivado de los movimientos vigentes -->
     <string name="account_no_movements">Sin movimientos</string>
@@ -86,6 +110,7 @@
     <!-- Historial -->
     <string name="history_title">Historial</string>
     <string name="history_empty">Todavía no hay fiados ni abonos. Usa «+ Fiado» para registrar el primero.</string>
+    <string name="history_empty_archived">Este cliente no tiene fiados ni abonos.</string>
     <string name="history_fiado">Fiado</string>
     <string name="history_abono">✓ Abono</string>
     <string name="history_payment">✓ Pago completo</string>
@@ -150,7 +175,8 @@
     <string name="movement_error_save">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
     <string name="movement_error_conflict">Este formulario ya guardó otro movimiento. Vuelve a la cuenta y revisa.</string>
     <string name="movement_error_client_not_found">Este cliente ya no existe.</string>
-    <string name="movement_error_client_archived">Este cliente está archivado y no admite movimientos nuevos.</string>
+    <string name="movement_error_client_archived">Este cliente está archivado y no admite movimientos nuevos. No se guardó nada.</string>
+    <string name="movement_error_client_archived_change">Este cliente está archivado: sus movimientos no se pueden corregir ni anular. Reactívalo primero.</string>
 
     <!-- Pago de saldo completo -->
     <string name="pay_full_title">Pagar saldo completo</string>
@@ -181,6 +207,7 @@
     <string name="movement_detail_modified">Última modificación</string>
     <string name="movement_detail_a11y_active">%1$s de %2$s pesos de %3$s.</string>
     <string name="movement_detail_a11y_annulled">%1$s anulado de %2$s pesos de %3$s. No afecta el saldo.</string>
+    <string name="movement_detail_client_archived">Cliente archivado: para corregir o anular este movimiento, primero reactiva al cliente.</string>
     <string name="movement_action_correct">Corregir</string>
     <string name="movement_action_annul">Anular</string>
     <string name="movement_action_changes">Ver cambios</string>

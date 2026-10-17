@@ -43,7 +43,7 @@ sealed interface MovementDetailState {
     data object Error : MovementDetailState
 }
 
-enum class AnnulFailure { SAVE_FAILED, VERSION_CONFLICT, ALREADY_ANNULLED, UNAVAILABLE }
+enum class AnnulFailure { SAVE_FAILED, VERSION_CONFLICT, ALREADY_ANNULLED, CLIENT_ARCHIVED, UNAVAILABLE }
 
 /** Diálogo de anulación. */
 sealed interface AnnulState {
@@ -120,7 +120,7 @@ class MovementDetailViewModel(
 
     fun openAnnul() {
         val loaded = _state.value as? MovementDetailState.Loaded ?: return
-        if (!loaded.movement.active || _annul.value != AnnulState.Hidden) return
+        if (!loaded.movement.active || !loaded.account.client.active || _annul.value != AnnulState.Hidden) return
         annulRequestId = UUID.randomUUID().toString()
         annulExpectedVersion = loaded.movement.version
         _annul.value = AnnulState.Open()
@@ -176,6 +176,7 @@ class MovementDetailViewModel(
         is ChangeMovementResult.Invalid -> copy(reasonError = result.errors.reason)
         ChangeMovementResult.VersionConflict -> copy(failure = AnnulFailure.VERSION_CONFLICT)
         ChangeMovementResult.AlreadyAnnulled -> copy(failure = AnnulFailure.ALREADY_ANNULLED)
+        ChangeMovementResult.ClientArchived -> copy(failure = AnnulFailure.CLIENT_ARCHIVED)
         else -> copy(failure = AnnulFailure.UNAVAILABLE)
     }
 

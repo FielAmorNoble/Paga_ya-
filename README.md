@@ -2,12 +2,13 @@
 
 Una libreta digital de cuentas por cliente para un pequeño emprendimiento familiar en Colombia.
 
-**Estado: clientes, movimientos, saldo, historial y correcciones en desarrollo, 16 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar y editar clientes; registrar fiados, abonos y el pago del saldo completo; ver el saldo y el historial; abrir un movimiento, corregirlo o anularlo conservando lo registrado originalmente, y consultar los cambios. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden reactivar movimientos anulados, archivar clientes ni hacer respaldos; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
+**Estado: clientes, movimientos, saldo, historial, correcciones y archivo de clientes en desarrollo, 16 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar, editar, archivar y reactivar clientes; registrar fiados, abonos y el pago del saldo completo; ver el saldo y el historial; abrir un movimiento, corregirlo o anularlo conservando lo registrado originalmente, y consultar los cambios. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden reactivar movimientos anulados ni hacer respaldos; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
 
 | | Estado |
 | --- | --- |
 | Proyecto Gradle, APK debug y Android Lint | Implementado y comprobado en Windows |
-| Clientes: crear, listar, buscar sin distinguir mayúsculas ni acentos, consultar y editar (HU-02 y HU-06, parciales) | Implementado; probado en el teléfono del desarrollador (Android 15). Falta archivar/reactivar y la vista «Archivados». Ver [15](docs/15_Gestion_Clientes.md) |
+| Clientes: crear, listar, buscar sin distinguir mayúsculas ni acentos, consultar y editar (HU-02 y HU-06) | Implementado; probado en el teléfono del desarrollador (Android 15). Ver [15](docs/15_Gestion_Clientes.md) |
+| Archivar (solo con saldo cero) y reactivar clientes; vista «Archivados» con buscador (HU-02.6, HU-06.6) | Implementado; 149 pruebas instrumentadas y 54 JVM correctas; recorrido manual en el teléfono del desarrollador (Android 15). HU-02 y HU-06 completas en su funcionalidad. Ver [18](docs/18_Archivo_Clientes.md) |
 | Base local Room v1: tablas, restricciones, metadata inicial | Implementada; 21 pruebas instrumentadas correctas en un teléfono con Android 15 (API 35); pendiente API 26. Ver [13](docs/13_Persistencia_Local.md) |
 | Movimientos: fiado, abono y pago completo; saldo derivado; historial con saldo por movimiento (HU-01, HU-03, HU-04, HU-05 y HU-07 en su parte de registro y lectura) | Implementado; 71 pruebas instrumentales y 30 JVM correctas; recorrido manual en el teléfono del desarrollador (Android 15). Ver [16](docs/16_Movimientos_Saldo_Historial.md) |
 | Detalle, corrección y anulación de movimientos con revisiones y «Ver cambios» (HU-08; parte de HU-07) | Implementado; 54 pruebas JVM y 123 instrumentadas correctas; recorrido manual en el teléfono del desarrollador (Android 15). No hay reactivación de anulados. Ver [17](docs/17_Correcciones_Movimientos.md) |
@@ -48,6 +49,7 @@ Estas decisiones son la propuesta técnica del proyecto. Sus supuestos, límites
 | [15 — Gestión de clientes](docs/15_Gestion_Clientes.md) | Recorrido de clientes, reglas, pruebas, recorrido en el teléfono y pendientes |
 | [16 — Movimientos, saldo e historial](docs/16_Movimientos_Saldo_Historial.md) | Registro de fiados, abonos y pago completo; reglas, decisiones, pruebas, pendientes y pasos para probar en el teléfono |
 | [17 — Correcciones de movimientos](docs/17_Correcciones_Movimientos.md) | Detalle, corrección y anulación con trazabilidad; integridad, decisiones, pruebas, pendientes y pasos para probar |
+| [18 — Archivo de clientes](docs/18_Archivo_Clientes.md) | Archivar y reactivar clientes, vista «Archivados»; reglas, carreras, pruebas, revisión de HU-02/HU-06 y pasos para probar |
 
 Se conservan los nueve documentos solicitados. Se agregan tres anexos para que decisiones, pruebas y fuentes puedan mantenerse sin sobrecargar el plan de implementación. Este índice es el punto de entrada; cada regla tiene un documento responsable.
 

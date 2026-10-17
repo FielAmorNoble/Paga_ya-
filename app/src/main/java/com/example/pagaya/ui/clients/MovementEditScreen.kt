@@ -226,7 +226,8 @@ fun MovementEditScreen(
 }
 
 private fun EditFailure?.blocksForm() =
-    this == EditFailure.NOT_FOUND || this == EditFailure.ALREADY_ANNULLED || this == EditFailure.VERSION_CONFLICT
+    this == EditFailure.NOT_FOUND || this == EditFailure.ALREADY_ANNULLED || this == EditFailure.VERSION_CONFLICT ||
+        this == EditFailure.CLIENT_ARCHIVED
 
 @Composable
 private fun editAmountMessage(error: AmountError?, rejection: HistoryRejection?): String? = when {
@@ -247,7 +248,7 @@ private fun editFailureText(failure: EditFailure): String = stringResource(
         EditFailure.VERSION_CONFLICT -> R.string.edit_error_version
         EditFailure.ALREADY_ANNULLED -> R.string.edit_error_annulled
         EditFailure.CONFLICT -> R.string.edit_error_conflict
-        EditFailure.CLIENT_ARCHIVED -> R.string.movement_error_client_archived
+        EditFailure.CLIENT_ARCHIVED -> R.string.movement_error_client_archived_change
         EditFailure.NOT_FOUND -> R.string.movement_detail_not_found
     },
 )

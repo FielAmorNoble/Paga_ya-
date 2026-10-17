@@ -30,6 +30,14 @@ interface ClientDao {
     )
     fun observeActive(likeFragment: String): Flow<List<ClientWithAccount>>
 
+    /** Archivados, con las mismas reglas de búsqueda y orden que [observeActive]. */
+    @Query(
+        CLIENT_WITH_ACCOUNT_SELECT +
+            "WHERE c.activo = 0 AND c.nombre_busqueda LIKE '%' || :likeFragment || '%' ESCAPE '\\' " +
+            "GROUP BY c.id ORDER BY c.nombre_busqueda, c.id",
+    )
+    fun observeArchived(likeFragment: String): Flow<List<ClientWithAccount>>
+
     @Query(CLIENT_WITH_ACCOUNT_SELECT + "WHERE c.id = :id GROUP BY c.id")
     fun observeWithAccount(id: String): Flow<ClientWithAccount?>
 
@@ -51,6 +59,13 @@ interface MovementDao {
     /** Movimientos vigentes de una cuenta, en el orden de cálculo `(fecha, orden_registro)`. */
     @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId AND activo = 1 ORDER BY fecha, orden_registro")
     fun findActiveByClient(clientId: String): List<MovementEntity>
+
+    /** Saldo vigente de la cuenta con la misma regla que [CLIENT_WITH_ACCOUNT_SELECT]: FIADO suma, ABONO resta. */
+    @Query(
+        "SELECT COALESCE(SUM(CASE tipo WHEN 'FIADO' THEN valor_cop ELSE -valor_cop END), 0) " +
+            "FROM movimiento WHERE cliente_id = :clientId AND activo = 1",
+    )
+    fun activeBalance(clientId: String): Long
 
     /** Todos los movimientos de la cuenta, vigentes y anulados: el historial muestra también los anulados. */
     @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId ORDER BY fecha, orden_registro")

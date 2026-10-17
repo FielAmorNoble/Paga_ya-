@@ -24,6 +24,19 @@ sealed interface SaveClientResult {
     data object NotFound : SaveClientResult
 }
 
+sealed interface ClientStatusResult {
+    /** El cliente quedó archivado o activo, según la operación pedida. */
+    data object Changed : ClientStatusResult
+
+    /** Ya estaba en ese estado: no se escribió nada ni se contó una revisión. */
+    data object Unchanged : ClientStatusResult
+
+    /** Archivar exige saldo vigente cero; no se escribió nada. */
+    data class BalanceNotZero(val balanceCop: Long) : ClientStatusResult
+
+    data object NotFound : ClientStatusResult
+}
+
 /**
  * Único punto de escritura de clientes. Valida de nuevo aunque la pantalla ya lo haya hecho y
  * actualiza `revision_datos` en la misma transacción que el cambio. Las lecturas son observables
@@ -35,10 +48,14 @@ class ClientRepository(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val clients = db.clientDao()
+    private val movements = db.movementDao()
     private val metadata = db.ledgerMetadataDao()
 
     fun observeActiveClients(query: String): Flow<List<ClientWithAccount>> =
         clients.observeActive(ClientRules.likeFragment(query))
+
+    fun observeArchivedClients(query: String): Flow<List<ClientWithAccount>> =
+        clients.observeArchived(ClientRules.likeFragment(query))
 
     fun observeClient(id: String): Flow<ClientWithAccount?> = clients.observeWithAccount(id)
 
@@ -111,6 +128,32 @@ class ClientRepository(
                 )
                 SaveClientResult.Saved(id)
             }
+        }
+    }
+
+    /**
+     * Archiva el cliente [id]: deja de aparecer en la lista principal sin perder datos, movimientos ni
+     * revisiones. Solo con saldo vigente exactamente cero (sin movimientos, saldada o con todo anulado).
+     * El saldo se lee en la misma transacción que cambia `activo`: un alta o corrección concurrente
+     * nunca deja un cliente archivado con deuda, porque las altas también exigen cliente activo dentro
+     * de su transacción.
+     */
+    suspend fun archive(id: String): ClientStatusResult = setActive(id, active = false)
+
+    /** Reactiva el cliente [id] conservando toda su información. */
+    suspend fun reactivate(id: String): ClientStatusResult = setActive(id, active = true)
+
+    private suspend fun setActive(id: String, active: Boolean): ClientStatusResult = withContext(ioDispatcher) {
+        db.runInTransaction<ClientStatusResult> {
+            val existing = clients.findById(id) ?: return@runInTransaction ClientStatusResult.NotFound
+            if (existing.active == active) return@runInTransaction ClientStatusResult.Unchanged
+            if (!active) {
+                val balance = movements.activeBalance(id)
+                if (balance != 0L) return@runInTransaction ClientStatusResult.BalanceNotZero(balance)
+            }
+            check(metadata.incrementDataRevision() == 1) { "Falta la fila de metadata" }
+            check(clients.update(existing.copy(active = active, modifiedAtMillis = clock.millis())) == 1) { "No se actualizó el cliente" }
+            ClientStatusResult.Changed
         }
     }
 

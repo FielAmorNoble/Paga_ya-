@@ -26,9 +26,14 @@ sealed interface ClientListState {
     data object Error : ClientListState
 }
 
+/**
+ * Lista de clientes con buscador. [archived] elige la vista: activos (la lista principal) o archivados;
+ * nunca se mezclan (HU-06).
+ */
 class ClientListViewModel(
     private val savedState: SavedStateHandle,
     private val repository: ClientRepository,
+    private val archived: Boolean = false,
 ) : ViewModel() {
 
     /** Se conserva al navegar y si el sistema recrea el proceso. */
@@ -42,7 +47,8 @@ class ClientListViewModel(
         viewModelScope.launch {
             combine(query, retries) { text, _ -> text }.collectLatest { text ->
                 try {
-                    repository.observeActiveClients(text).collect { _state.value = ClientListState.Loaded(it) }
+                    val clients = if (archived) repository.observeArchivedClients(text) else repository.observeActiveClients(text)
+                    clients.collect { _state.value = ClientListState.Loaded(it) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -66,6 +72,10 @@ class ClientListViewModel(
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer { ClientListViewModel(createSavedStateHandle(), pagaYaContainer().clientRepository) }
+        }
+
+        val ArchivedFactory: ViewModelProvider.Factory = viewModelFactory {
+            initializer { ClientListViewModel(createSavedStateHandle(), pagaYaContainer().clientRepository, archived = true) }
         }
     }
 }

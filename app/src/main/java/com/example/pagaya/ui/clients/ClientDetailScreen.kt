@@ -20,6 +20,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -86,11 +89,18 @@ fun ClientDetailScreen(
     /** Tipo del movimiento recién guardado por el formulario ([MovementType.name]); `null` si no hay aviso. */
     savedMovement: String?,
     onSavedMovementShown: () -> Unit,
+    /** El cliente quedó archivado: volver a la lista de origen, que avisa con su nombre. */
+    onArchived: (clientName: String) -> Unit,
     viewModel: ClientDetailViewModel = viewModel(factory = ClientDetailViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val payFull by viewModel.payFull.collectAsStateWithLifecycle()
     val paymentSaved by viewModel.paymentSaved.collectAsStateWithLifecycle()
+    val archive by viewModel.archive.collectAsStateWithLifecycle()
+    val archived by viewModel.archived.collectAsStateWithLifecycle()
+    val reactivating by viewModel.reactivating.collectAsStateWithLifecycle()
+    val reactivated by viewModel.reactivated.collectAsStateWithLifecycle()
+    val reactivateFailed by viewModel.reactivateFailed.collectAsStateWithLifecycle()
     val loaded = state as? ClientDetailState.Loaded
     val title = loaded?.account?.client?.name.orEmpty()
 
@@ -100,6 +110,8 @@ fun ClientDetailScreen(
     val fiadoSaved = stringResource(R.string.saved_fiado)
     val abonoSaved = stringResource(R.string.saved_abono)
     val paymentMessage = stringResource(R.string.saved_payment)
+    // Consumir un aviso cambia la clave de su efecto y lo cancela: los snackbars van en este scope.
+    val snackbarScope = rememberCoroutineScope()
     LaunchedEffect(savedMovement) {
         val text = when (savedMovement) {
             MovementType.FIADO.name -> fiadoSaved
@@ -108,13 +120,26 @@ fun ClientDetailScreen(
         }
         if (text != null) {
             onSavedMovementShown()
-            snackbarHostState.showSnackbar(text)
+            snackbarScope.launch { snackbarHostState.showSnackbar(text) }
+        }
+    }
+    LaunchedEffect(archived) {
+        archived?.let {
+            viewModel.consumeArchived()
+            onArchived(it)
+        }
+    }
+    val reactivatedMessage = stringResource(R.string.reactivate_done)
+    LaunchedEffect(reactivated) {
+        if (reactivated) {
+            viewModel.consumeReactivated()
+            snackbarScope.launch { snackbarHostState.showSnackbar(reactivatedMessage) }
         }
     }
     LaunchedEffect(paymentSaved) {
         if (paymentSaved) {
             viewModel.consumePaymentSaved()
-            snackbarHostState.showSnackbar(paymentMessage)
+            snackbarScope.launch { snackbarHostState.showSnackbar(paymentMessage) }
         }
     }
 
@@ -131,6 +156,8 @@ fun ClientDetailScreen(
                         onClick = { onEdit(loaded.account.client.id) },
                         modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = editDescription },
                     ) { Text(stringResource(R.string.detail_edit_action)) }
+                    // Archivar es secundario: va en el menú, lejos de Fiado y Abono (docs/06).
+                    if (loaded.account.client.active) AccountMenu(onArchive = viewModel::startArchive)
                 }
             }
         },
@@ -167,6 +194,9 @@ fun ClientDetailScreen(
                     history = current.history,
                     onPayFull = viewModel::startPayFull,
                     onOpenMovement = onOpenMovement,
+                    onReactivate = viewModel::reactivate,
+                    reactivating = reactivating,
+                    reactivateFailed = reactivateFailed,
                     // Con la barra inferior, el Scaffold ya reserva la barra de navegación.
                     reserveNavigationBar = !current.account.client.active,
                 )
@@ -183,6 +213,120 @@ fun ClientDetailScreen(
         onConfirm = viewModel::confirmPayFull,
         onDismiss = viewModel::dismissPayFull,
     )
+    ArchiveDialogs(
+        state = archive,
+        clientName = title,
+        onConfirm = viewModel::confirmArchive,
+        onDismiss = viewModel::dismissArchive,
+    )
+}
+
+@Composable
+private fun AccountMenu(onArchive: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { expanded = true }, modifier = Modifier.size(48.dp)) {
+            Icon(painterResource(R.drawable.ic_more_vert), contentDescription = stringResource(R.string.menu_more))
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.archive_action)) },
+                onClick = {
+                    expanded = false
+                    onArchive()
+                },
+                modifier = Modifier.heightIn(min = 48.dp),
+            )
+        }
+    }
+}
+
+/** Aviso de cuenta archivada: sin acciones financieras; solo consultar y reactivar. */
+@Composable
+private fun ArchivedNotice(onReactivate: () -> Unit, reactivating: Boolean, failed: Boolean) {
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                stringResource(R.string.archived_badge),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.semantics { heading() },
+            )
+            Text(stringResource(R.string.archived_account_note), style = MaterialTheme.typography.bodyMedium)
+            Button(
+                onClick = onReactivate,
+                enabled = !reactivating,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            ) {
+                Text(
+                    stringResource(if (reactivating) R.string.reactivate_saving else R.string.reactivate_action),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+            if (failed) {
+                Text(
+                    stringResource(R.string.reactivate_error),
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ArchiveDialogs(state: ArchiveState, clientName: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    when (state) {
+        ArchiveState.Hidden -> Unit
+        is ArchiveState.Confirm -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.archive_confirm_title, clientName)) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.archive_confirm_text), style = MaterialTheme.typography.bodyLarge)
+                    if (state.failed) {
+                        Text(
+                            stringResource(R.string.archive_error),
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = onConfirm, enabled = !state.saving, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(if (state.saving) R.string.archive_saving else R.string.archive_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss, enabled = !state.saving, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.archive_cancel))
+                }
+            },
+        )
+        is ArchiveState.HasDebt -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.archive_debt_title)) },
+            text = {
+                Text(
+                    if (state.balanceCop > 0) {
+                        stringResource(R.string.archive_debt_text, clientName, formatCop(state.balanceCop))
+                    } else {
+                        stringResource(R.string.archive_inconsistent_text)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onDismiss, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.archive_debt_ok))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -214,13 +358,17 @@ private fun AccountContent(
     history: List<HistoryRow>,
     onPayFull: () -> Unit,
     onOpenMovement: (String) -> Unit,
+    onReactivate: () -> Unit,
+    reactivating: Boolean,
+    reactivateFailed: Boolean,
     reserveNavigationBar: Boolean,
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp)) {
         item(key = "balance") {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (!account.client.active) ArchivedNotice(onReactivate, reactivating, reactivateFailed)
                 BalanceCard(account)
-                if (account.balanceCop > 0) {
+                if (account.client.active && account.balanceCop > 0) {
                     OutlinedButton(onClick = onPayFull, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                         Text(stringResource(R.string.movement_pay_full), style = MaterialTheme.typography.titleMedium)
                     }
@@ -237,7 +385,8 @@ private fun AccountContent(
         if (history.isEmpty()) {
             item(key = "history-empty") {
                 Text(
-                    stringResource(R.string.history_empty),
+                    // Una cuenta archivada no ofrece «+ Fiado»: no se invita a usarlo.
+                    stringResource(if (account.client.active) R.string.history_empty else R.string.history_empty_archived),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

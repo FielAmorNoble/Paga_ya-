@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.pagaya.data.ClientRepository
+import com.example.pagaya.data.ClientStatusResult
 import com.example.pagaya.data.MovementRepository
 import com.example.pagaya.data.RegisterMovementResult
 import com.example.pagaya.data.local.ClientWithAccount
@@ -52,6 +53,17 @@ sealed interface PayFullState {
     data class TooLarge(val balanceCop: Long) : PayFullState
 }
 
+/** Diálogos de archivar el cliente. */
+sealed interface ArchiveState {
+    data object Hidden : ArchiveState
+
+    /** Confirmación: se conserva el historial y se puede reactivar. */
+    data class Confirm(val saving: Boolean = false, val failed: Boolean = false) : ArchiveState
+
+    /** Tiene deuda: primero debe quedar saldada. No se ofrece liquidarla. */
+    data class HasDebt(val balanceCop: Long) : ArchiveState
+}
+
 class ClientDetailViewModel(
     savedState: SavedStateHandle,
     private val clients: ClientRepository,
@@ -69,6 +81,25 @@ class ClientDetailViewModel(
 
     /** `true` desde que se guardó un pago completo hasta que la pantalla lo avisa con [consumePaymentSaved]. */
     val paymentSaved: StateFlow<Boolean> = _paymentSaved.asStateFlow()
+
+    private val _archive = MutableStateFlow<ArchiveState>(ArchiveState.Hidden)
+    val archive: StateFlow<ArchiveState> = _archive.asStateFlow()
+
+    private val _archived = MutableStateFlow<String?>(null)
+
+    /** Nombre del cliente recién archivado: la pantalla vuelve a la lista de origen y lo avisa allí. */
+    val archived: StateFlow<String?> = _archived.asStateFlow()
+
+    private val _reactivating = MutableStateFlow(false)
+    val reactivating: StateFlow<Boolean> = _reactivating.asStateFlow()
+
+    private val _reactivated = MutableStateFlow(false)
+
+    /** `true` desde que se reactivó hasta que la pantalla lo avisa con [consumeReactivated]. */
+    val reactivated: StateFlow<Boolean> = _reactivated.asStateFlow()
+
+    private val _reactivateFailed = MutableStateFlow(false)
+    val reactivateFailed: StateFlow<Boolean> = _reactivateFailed.asStateFlow()
 
     // Un intento de pago completo conserva su ID mientras el diálogo siga abierto; se reutiliza en reintentos.
     private var payFullRequestId: String = ""
@@ -142,6 +173,76 @@ class ClientDetailViewModel(
                 }
             }
         }
+    }
+
+    /** Abre la confirmación de archivar, o la explicación de que primero debe saldarse la deuda. */
+    fun startArchive() {
+        val loaded = _state.value as? ClientDetailState.Loaded ?: return
+        if (!loaded.account.client.active || _archive.value != ArchiveState.Hidden) return
+        val balance = loaded.account.balanceCop
+        _archive.value = if (balance != 0L) ArchiveState.HasDebt(balance) else ArchiveState.Confirm()
+    }
+
+    fun dismissArchive() {
+        if ((_archive.value as? ArchiveState.Confirm)?.saving == true) return
+        _archive.value = ArchiveState.Hidden
+    }
+
+    fun confirmArchive() {
+        val current = _archive.value as? ArchiveState.Confirm ?: return
+        // Se marca «guardando» de forma síncrona: un doble toque no lanza dos escrituras.
+        if (current.saving) return
+        _archive.value = current.copy(saving = true, failed = false)
+        val name = (_state.value as? ClientDetailState.Loaded)?.account?.client?.name.orEmpty()
+        viewModelScope.launch {
+            val result = try {
+                clients.archive(clientId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            _archive.value = when (result) {
+                // Ya archivado (por ejemplo, un reintento): el resultado para la usuaria es el mismo.
+                ClientStatusResult.Changed, ClientStatusResult.Unchanged -> {
+                    _archived.value = name
+                    ArchiveState.Hidden
+                }
+                // Se registró deuda entre la confirmación y el guardado: no se archivó nada.
+                is ClientStatusResult.BalanceNotZero -> ArchiveState.HasDebt(result.balanceCop)
+                ClientStatusResult.NotFound, null -> current.copy(saving = false, failed = true)
+            }
+        }
+    }
+
+    fun consumeArchived() {
+        _archived.value = null
+    }
+
+    fun reactivate() {
+        val loaded = _state.value as? ClientDetailState.Loaded ?: return
+        if (loaded.account.client.active) return
+        // Síncrono: un doble toque no lanza dos escrituras (el repositorio, además, no repite cambios).
+        if (!_reactivating.compareAndSet(expect = false, update = true)) return
+        _reactivateFailed.value = false
+        viewModelScope.launch {
+            val result = try {
+                clients.reactivate(clientId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
+            when (result) {
+                ClientStatusResult.Changed, ClientStatusResult.Unchanged -> _reactivated.value = true
+                else -> _reactivateFailed.value = true
+            }
+            _reactivating.value = false
+        }
+    }
+
+    fun consumeReactivated() {
+        _reactivated.value = false
     }
 
     private fun failureFor(result: RegisterMovementResult?) = when (result) {

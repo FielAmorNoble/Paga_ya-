@@ -21,6 +21,7 @@ Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, bac
 - Gestión de clientes (estado y pendientes de HU-02/HU-06): `docs/15_Gestion_Clientes.md`
 - Movimientos, saldo e historial (reglas, decisiones, pruebas, pendientes): `docs/16_Movimientos_Saldo_Historial.md`
 - Detalle, corrección y anulación de movimientos (revisiones, versiones, idempotencia): `docs/17_Correcciones_Movimientos.md`
+- Archivar y reactivar clientes, vista «Archivados»: `docs/18_Archivo_Clientes.md`
 
 Si un documento contradice a otro o al código, señalarlo antes de cambiar una decisión de producto.
 

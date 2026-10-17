@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pagaya.data.local.MovementType
+import com.example.pagaya.ui.clients.ArchivedClientListScreen
 import com.example.pagaya.ui.clients.ClientDetailScreen
 import com.example.pagaya.ui.clients.ClientFormScreen
 import com.example.pagaya.ui.clients.ClientFormViewModel
@@ -25,6 +26,7 @@ import com.example.pagaya.ui.clients.MovementFormViewModel
 private object Routes {
     const val CLIENTS = "clients"
     const val NEW_CLIENT = "clients/new"
+    const val ARCHIVED = "clients/archived"
     const val CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}"
     const val EDIT_CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}/edit"
     const val MOVEMENT = "movement/{${MovementDetailViewModel.MOVEMENT_ID_ARG}}"
@@ -43,6 +45,9 @@ private object Routes {
 /** Clave con la que el formulario de movimiento avisa a la cuenta que acaba de guardar (el tipo guardado). */
 private const val SAVED_MOVEMENT = "savedMovement"
 
+/** Clave con la que la cuenta avisa a la lista de origen que acaba de archivar al cliente (su nombre). */
+private const val ARCHIVED_CLIENT = "archivedClient"
+
 @Composable
 fun PagaYaNavHost() {
     val navController = rememberNavController()
@@ -50,10 +55,23 @@ fun PagaYaNavHost() {
     val clientIdArg = listOf(navArgument(ClientFormViewModel.CLIENT_ID_ARG) { type = NavType.StringType })
 
     NavHost(navController = navController, startDestination = Routes.CLIENTS) {
-        composable(Routes.CLIENTS) {
+        composable(Routes.CLIENTS) { entry ->
+            val archivedClient by entry.savedStateHandle.getStateFlow<String?>(ARCHIVED_CLIENT, null).collectAsStateWithLifecycle()
             ClientListScreen(
                 onOpenClient = { navController.navigate(Routes.client(it)) },
                 onNewClient = { navController.navigate(Routes.NEW_CLIENT) },
+                onOpenArchived = { navController.navigate(Routes.ARCHIVED) { launchSingleTop = true } },
+                archivedClient = archivedClient,
+                onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
+            )
+        }
+        composable(Routes.ARCHIVED) { entry ->
+            val archivedClient by entry.savedStateHandle.getStateFlow<String?>(ARCHIVED_CLIENT, null).collectAsStateWithLifecycle()
+            ArchivedClientListScreen(
+                onOpenClient = { navController.navigate(Routes.client(it)) },
+                onBack = { navController.popBackStack() },
+                archivedClient = archivedClient,
+                onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
             )
         }
         composable(Routes.NEW_CLIENT) {
@@ -74,6 +92,11 @@ fun PagaYaNavHost() {
                 onBack = { navController.popBackStack() },
                 savedMovement = savedMovement,
                 onSavedMovementShown = { entry.savedStateHandle[SAVED_MOVEMENT] = null },
+                onArchived = { name ->
+                    // La lista de origen (Clientes o Archivados) es la pantalla anterior; allí se confirma.
+                    navController.previousBackStackEntry?.savedStateHandle?.set(ARCHIVED_CLIENT, name)
+                    navController.popBackStack()
+                },
             )
         }
         composable(Routes.EDIT_CLIENT, arguments = clientIdArg) {
