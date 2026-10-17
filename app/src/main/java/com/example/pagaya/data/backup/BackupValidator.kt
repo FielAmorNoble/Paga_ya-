@@ -66,12 +66,12 @@ class BackupValidator(private val limits: BackupLimits = BackupLimits()) {
      * @throws java.io.IOException si el archivo no se puede leer (distinto de un archivo inválido).
      */
     fun validate(file: File, today: LocalDate? = null): BackupValidation = try {
-        BackupValidation.Valid(check(file, today))
+        BackupValidation.Valid(readValidated(file, today).summary)
     } catch (e: BackupInvalidException) {
         BackupValidation.Invalid(e.problem, e.detail)
     }
 
-    private fun check(file: File, today: LocalDate?): BackupSummary {
+    internal fun readValidated(file: File, today: LocalDate? = null): ValidatedBackup {
         val size = file.length()
         if (size > limits.maxArchiveBytes) fail(BackupProblem.LIMIT_EXCEEDED, "archivo de $size bytes")
         val (manifestEntry, dataEntry) = checkContainer(file, size)
@@ -123,8 +123,11 @@ class BackupValidator(private val limits: BackupLimits = BackupLimits()) {
         if (parsed.ledger.id != manifest.ledgerId) fail(BackupProblem.IDENTITY_MISMATCH, "libreta_id distinto")
         if (parsed.ledger.dataRevision != manifest.dataRevision) fail(BackupProblem.IDENTITY_MISMATCH, "revision_datos distinto")
 
-        return LedgerChecker(parsed, today).check(manifest)
+        return ValidatedBackup(parsed, checkRows(parsed, manifest, today))
     }
+
+    internal fun checkRows(data: ParsedData, manifest: BackupManifest, today: LocalDate?): BackupSummary =
+        LedgerChecker(data, today).check(manifest)
 
     // ---- contenedor ------------------------------------------------------------------------
 
@@ -430,6 +433,7 @@ private fun fail(problem: BackupProblem, detail: String): Nothing = throw Backup
 
 // ---- data.json -------------------------------------------------------------------------------
 
+internal class ValidatedBackup(val data: ParsedData, val summary: BackupSummary)
 internal class LedgerRow(val id: String, val createdAtMillis: Long, val dataRevision: Long, val nextEntryOrder: Long)
 
 internal class ClientRow(

@@ -82,6 +82,8 @@ Generar secuencias válidas de fiados/abonos y comprobar: ningún prefijo negati
 
 ## Evidencia y bloqueo de salida
 
+Evidencia de iteración 09 (2026-10-17) en [20 — Restauración desde archivo](20_Restauracion_Archivo.md): 23 casos de servicio y 4 de pantalla nuevos, regresión JVM/instrumentada y ensayo manual en dos instalaciones aisladas. Incluye archivos inválidos, reemplazo/rollback, copia vacía, repetición, épocas obsoletas, exclusión, protección previa, recuperación y cortes deterministas antes/después del commit. No equivale a muerte real del proceso ni completa los casos de Drive de HU-09; mínimos de API/dispositivo y rendimiento de restauración siguen pendientes.
+
 Cada ejecución registra: versión/commit, equipo/API, tipo de build, datos/semilla, pasos, resultado esperado/observado y evidencia sin datos personales. Un caso no aplicable requiere razón; no equivale a aprobado. En V1 inicial, migraciones se prueban con esquemas de prueba y al menos actualización que conserve datos; cada cambio real de esquema añade su ruta obligatoria.
 
 Todos los casos críticos deben aprobarse antes de operar la única libreta real. No aceptar pérdida de datos, diferencia de saldo, restauración sin validar, eliminación remota indebida ni bloqueo offline como “limitación conocida”. Los objetivos de usabilidad/rendimiento se evalúan con la vendedora y el equipo acordado; cualquier ajuste de meta requiere explicación documentada.

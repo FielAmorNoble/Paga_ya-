@@ -1,5 +1,6 @@
 package com.example.pagaya.ui.clients
 
+import com.example.pagaya.ui.common.writeEpoch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -56,6 +57,7 @@ class ClientFormViewModel(
     private val saved: SavedStateHandle,
     private val repository: ClientRepository,
 ) : ViewModel() {
+    private val epoch = writeEpoch(saved, repository::currentEpoch)
 
     private val clientId: String? = saved[CLIENT_ID_ARG]
     private val requestId: String = saved[REQUEST_ID] ?: UUID.randomUUID().toString().also { saved[REQUEST_ID] = it }
@@ -95,7 +97,7 @@ class ClientFormViewModel(
         _state.update { it.copy(saving = true, failure = null) }
         viewModelScope.launch {
             val result = try {
-                if (clientId == null) repository.create(requestId, input) else repository.update(clientId, input)
+                if (clientId == null) repository.create(requestId, input, epoch.await()) else repository.update(clientId, input, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

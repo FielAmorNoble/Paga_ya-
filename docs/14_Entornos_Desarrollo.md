@@ -83,6 +83,12 @@ Se confirmó por ADB el Motorola moto g84 5G (API 35) y los paquetes `.dev` y `.
 
 ## Comandos comprobados
 
+### Iteración 09: segunda instalación sintética
+
+Se añade `qaRestore`, paquete `com.example.pagaya.qa.restore`, nombre «Paga Ya! QA Restauración», `assembleQaRestore`, APK `app/build/outputs/apk/qaRestore/app-qaRestore.apk`. Usa el código debug con datos independientes; no cambia la variante normal. Permite restaurar en otra libreta vacía sin borrar QA. No vaciar/desinstalar ninguna libreta de pruebas existente por iniciativa propia.
+
+El 2026-10-17 se confirmó Motorola `ZT322JX5BF`/API 35 y paquetes `.dev`/`.qa`; `.qa.restore` y normal ausentes inicialmente. Dev/QA se actualizaron con `install -r`; QA Restauración se instaló nueva. Pruebas mediante `install -r` del APK `.dev.test` y `am instrument`, con bases `test-*.db`. Ensayo manual local QA → QA Restauración y recuperación anterior documentados en [20](20_Restauracion_Archivo.md). Nunca `connectedDebugAndroidTest`, `pm clear` ni restaurar/exportar Dev.
+
 ```
 .\gradlew.bat assembleDebug assembleRelease assembleDebugAndroidTest lintDebug --rerun-tasks --no-build-cache --no-daemon --console=plain
 .\gradlew.bat connectedDebugAndroidTest

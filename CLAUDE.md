@@ -23,6 +23,7 @@ Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, bac
 - Detalle, corrección y anulación de movimientos (revisiones, versiones, idempotencia): `docs/17_Correcciones_Movimientos.md`
 - Archivar y reactivar clientes, vista «Archivados»: `docs/18_Archivo_Clientes.md`
 - Respaldo en archivo (contrato del ZIP, validador, exportación y estado): `docs/19_Respaldo_Archivo.md`
+- Restauración desde archivo, exclusión y recuperación anterior (iteración 09): `docs/20_Restauracion_Archivo.md`
 
 Si un documento contradice a otro o al código, señalarlo antes de cambiar una decisión de producto.
 
@@ -44,6 +45,7 @@ Requiere JDK 17+ en `PATH` o `JAVA_HOME`, y `local.properties` con `sdk.dir` (no
 ```
 .\gradlew.bat assembleDebug     # app de desarrollo com.example.pagaya.dev («Paga Ya! Dev»)
 .\gradlew.bat assembleQa        # app aislada com.example.pagaya.qa («Paga Ya! QA») para verificaciones manuales con datos sintéticos
+.\gradlew.bat assembleQaRestore # segunda app aislada com.example.pagaya.qa.restore («Paga Ya! QA Restauración»)
 .\gradlew.bat assembleRelease   # app normal com.example.pagaya, sin firma de distribución
 .\gradlew.bat lintDebug         # informe en app/build/reports/lint-results-debug.html
 .\gradlew.bat testDebugUnitTest # pruebas JVM (reglas de dominio)
@@ -68,6 +70,7 @@ Un build incremental con un daemon reutilizado corre con los permisos de ese dae
 - Ambas ramas conservan pruebas, documentación y `app/schemas`. Las pruebas se empaquetan en un APK aparte y no entran en la app final.
 - Las pruebas instrumentadas usan solo la variante debug (`com.example.pagaya.dev`). Nunca desinstalar ni borrar datos de `com.example.pagaya` ni instalar el APK release en un teléfono sin una decisión explícita.
 - `qa` (`com.example.pagaya.qa`, «Paga Ya! QA»): copia de debug con datos propios, solo para comprobaciones manuales con datos sintéticos (p. ej. exportar o restaurar). Usarla en vez de Dev cuando una prueba saque datos de la app. No desinstalarla sin decisión explícita.
+- `qaRestore` (`com.example.pagaya.qa.restore`): segunda instalación sintética independiente; permite ensayar restauración en una libreta nueva sin vaciar QA. No borrar sus datos por iniciativa propia.
 - Antes de ejecutar pruebas en un dispositivo, listar los paquetes `pagaya` instalados.
 - `connectedDebugAndroidTest` desinstala `com.example.pagaya.dev` al terminar y con ello **borra sus datos** (los clientes ficticios de la usuaria). Si la app Dev tiene datos, usar `adb install -r` de ambos APK y `adb shell am instrument -w com.example.pagaya.dev.test/androidx.test.runner.AndroidJUnitRunner` (ver `docs/16` y `docs/17`), y desinstalar solo `.dev.test`.
 - No usar `reset --hard`, `clean`, force push ni borrar ramas para ordenar el repositorio.
@@ -79,4 +82,5 @@ Un build incremental con un daemon reutilizado corre con los permisos de ese dae
 - Cambios de esquema Room incluyen migración y prueba; nunca `fallbackToDestructiveMigration`.
 - Las restricciones adicionales viven en `SchemaConstraints.kt` como triggers que Room no exporta ni migra: toda migración debe dejar exactamente `SchemaConstraints.definitions` (se verifica al abrir).
 - Las escrituras pasan por los repositorios (`data/`); las pantallas usan ViewModels y nunca DAOs. Toda escritura de negocio incrementa `revision_datos` en la misma transacción.
+- Orden de exclusión: `operation` de respaldo/restauración → `writes` compartido → transacción Room; negocio solo toma `writes`. Formularios envían época local; el repositorio la comprueba antes de escribir. La protección previa no vuelve a adquirir mutex ya poseídos. Ver doc 20.
 - No hacer commits, pushes ni publicaciones salvo que se pida.

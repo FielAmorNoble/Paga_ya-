@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import java.time.Clock
+import com.example.pagaya.data.LedgerCoordination
 
 @Database(
     entities = [
@@ -21,6 +22,7 @@ import java.time.Clock
 )
 @TypeConverters(LocalDateConverter::class)
 abstract class PagaYaDatabase : RoomDatabase() {
+    val coordination = LedgerCoordination()
     abstract fun clientDao(): ClientDao
     abstract fun movementDao(): MovementDao
     abstract fun movementRevisionDao(): MovementRevisionDao

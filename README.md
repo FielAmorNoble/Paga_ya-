@@ -2,7 +2,7 @@
 
 Una libreta digital de cuentas por cliente para un pequeño emprendimiento familiar en Colombia.
 
-**Estado: clientes, movimientos, saldo, historial, correcciones, archivo de clientes y copia en archivo en desarrollo, 16 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar, editar, archivar y reactivar clientes; registrar fiados, abonos y el pago del saldo completo; ver el saldo y el historial; abrir un movimiento, corregirlo o anularlo conservando lo registrado originalmente, y consultar los cambios; y guardar una copia completa en un archivo elegido, que la app relee y valida antes de confirmarla. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden recuperar las cuentas desde una copia (restauración), usar Google Drive ni reactivar movimientos anulados; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
+**Estado: restauración desde archivo y recuperación del estado anterior implementadas para revisión, 17 de octubre de 2026.** La app permite gestionar clientes, fiados, abonos, pagos, correcciones, anulaciones y archivado; exportar una copia verificada; y restaurarla con vista previa, protección privada del estado anterior y reemplazo transaccional. Todo funciona con archivos locales sin Internet. **Google Drive y respaldos automáticos siguen pendientes; HU-09 no está completa y no es una versión para llevar la única libreta real.** Evidencia y límites de esta iteración en [20](docs/20_Restauracion_Archivo.md).
 
 | | Estado |
 | --- | --- |
@@ -13,7 +13,8 @@ Una libreta digital de cuentas por cliente para un pequeño emprendimiento famil
 | Movimientos: fiado, abono y pago completo; saldo derivado; historial con saldo por movimiento (HU-01, HU-03, HU-04, HU-05 y HU-07 en su parte de registro y lectura) | Implementado; 71 pruebas instrumentales y 30 JVM correctas; recorrido manual en el teléfono del desarrollador (Android 15). Ver [16](docs/16_Movimientos_Saldo_Historial.md) |
 | Detalle, corrección y anulación de movimientos con revisiones y «Ver cambios» (HU-08; parte de HU-07) | Implementado; 54 pruebas JVM y 123 instrumentadas correctas; recorrido manual en el teléfono del desarrollador (Android 15). No hay reactivación de anulados. Ver [17](docs/17_Correcciones_Movimientos.md) |
 | Respaldo en archivo: «Respaldo» en el menú, captura consistente, ZIP con `manifest.json` y `data.json`, validador reutilizable, selector del sistema, relectura y verificación, estado de la última copia y cambios sin respaldar (RF-11, RF-13 para archivo) | Implementado; 88 pruebas JVM y 167 instrumentadas correctas. En el teléfono, en la app aislada «Paga Ya! QA» con datos sintéticos: exportación a Descargas en modo avión verificada (también fuera del teléfono), cambios sin respaldar, cancelación y proceso cerrado con el selector abierto. **Pendiente:** destino en la nube. Ver [19](docs/19_Respaldo_Archivo.md) |
-| Restauración (recuperar cuentas) y Google Drive | Planificado: la restauración es la siguiente iteración; aún no se puede recuperar una copia ni se ha ensayado en otra instalación |
+| Restauración desde archivo y «Recuperar datos anteriores» | Implementado; 23 pruebas de servicio y 4 de pantalla correctas; ensayo manual QA → QA Restauración vacía, reemplazo y recuperación anterior. Regresión completa previa: 195 correctas y 2 auxiliares opt-in omitidos (runner 197), 105 JVM. Ver [20](docs/20_Restauracion_Archivo.md) |
+| Google Drive | Pendiente; HU-09 sigue parcial |
 
 La V1 permitirá registrar fiados, abonos y pagos, consultar cuánto debe cada cliente y recuperar la información desde un respaldo. Funcionará sin Internet; Google Drive se utilizará únicamente para copias autorizadas.
 
@@ -52,6 +53,7 @@ Estas decisiones son la propuesta técnica del proyecto. Sus supuestos, límites
 | [17 — Correcciones de movimientos](docs/17_Correcciones_Movimientos.md) | Detalle, corrección y anulación con trazabilidad; integridad, decisiones, pruebas, pendientes y pasos para probar |
 | [18 — Archivo de clientes](docs/18_Archivo_Clientes.md) | Archivar y reactivar clientes, vista «Archivados»; reglas, carreras, pruebas, revisión de HU-02/HU-06 y pasos para probar |
 | [19 — Respaldo en archivo](docs/19_Respaldo_Archivo.md) | Contrato exacto del archivo, arquitectura de captura/validación/exportación, validaciones, pruebas, pendientes y pasos para probar |
+| [20 — Restauración desde archivo](docs/20_Restauracion_Archivo.md) | Vista previa, base temporal, exclusión, rollback, copia previa y recuperación; evidencia y límites reales |
 
 Se conservan los nueve documentos solicitados. Se agregan tres anexos para que decisiones, pruebas y fuentes puedan mantenerse sin sobrecargar el plan de implementación. Este índice es el punto de entrada; cada regla tiene un documento responsable.
 
@@ -75,11 +77,12 @@ En PowerShell: `.\gradlew.bat assembleDebug lintDebug`. Para una verificación d
 | --- | --- | --- | --- | --- |
 | Desarrollo (debug) | `com.example.pagaya.dev` | Paga Ya! Dev | `assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` |
 | Verificación (qa) | `com.example.pagaya.qa` | Paga Ya! QA | `assembleQa` | `app/build/outputs/apk/qa/app-qa.apk`. Copia de debug para comprobaciones manuales con datos sintéticos; no comparte datos con Dev |
+| Restauración aislada (qaRestore) | `com.example.pagaya.qa.restore` | Paga Ya! QA Restauración | `assembleQaRestore` | `app/build/outputs/apk/qaRestore/app-qaRestore.apk`. Segunda libreta independiente para ensayos sintéticos |
 | Normal (release) | `com.example.pagaya` | Paga Ya! | `assembleRelease` | `app/build/outputs/apk/release/app-release-unsigned.apk` (sin firma de distribución) |
 
 Al tener `applicationId` distintos, cada una usa su propio directorio de datos y su propia `pagaya.db`. Las pruebas instrumentadas se ejecutan **solo contra la variante de desarrollo**:
 - `assembleDebugAndroidTest` compila el APK de pruebas `com.example.pagaya.dev.test`.
-- `connectedDebugAndroidTest` instala `.dev` y `.dev.test`, ejecuta las pruebas y desinstala solo esos dos paquetes.
+- **No usar `connectedDebugAndroidTest` con datos Dev:** desinstala `.dev` al terminar y borra sus datos. Usar `adb install -r` para debug y tests, seguido de `adb shell am instrument -w com.example.pagaya.dev.test/androidx.test.runner.AndroidJUnitRunner`. Las pruebas usan bases independientes; retirar solo `.dev.test` al terminar.
 
 Las pruebas se conservan en el repositorio, también en `main`, pero se empaquetan aparte: el APK release no contiene clases de prueba. Para instalar la app de desarrollo en un teléfono con depuración USB: `adb install -r app/build/outputs/apk/debug/app-debug.apk`. No instalar el APK release sin una decisión explícita. Detalles en [14](docs/14_Entornos_Desarrollo.md).
 

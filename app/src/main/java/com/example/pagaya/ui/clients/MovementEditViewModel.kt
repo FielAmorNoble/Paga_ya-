@@ -1,5 +1,6 @@
 package com.example.pagaya.ui.clients
 
+import com.example.pagaya.ui.common.writeEpoch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -133,6 +134,7 @@ class MovementEditViewModel(
     private val movements: MovementRepository,
     private val evaluator: CorrectionEvaluator = HistoryCorrectionEvaluator(movements),
 ) : ViewModel() {
+    private val epoch = writeEpoch(saved, movements::currentEpoch)
     private val movementId: String = checkNotNull(saved[MOVEMENT_ID_ARG])
     private val requestId: String = saved[REQUEST_ID] ?: UUID.randomUUID().toString().also { saved[REQUEST_ID] = it }
 
@@ -288,6 +290,7 @@ class MovementEditViewModel(
                     movementId,
                     request.expectedVersion,
                     CorrectionInput(request.amountText, request.date, request.description, request.reason),
+                    expectedEpoch = epoch.await(),
                 )
             } catch (e: CancellationException) {
                 throw e

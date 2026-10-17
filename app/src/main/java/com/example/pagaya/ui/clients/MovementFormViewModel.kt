@@ -1,5 +1,6 @@
 package com.example.pagaya.ui.clients
 
+import com.example.pagaya.ui.common.writeEpoch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -60,6 +61,7 @@ class MovementFormViewModel(
     private val clients: ClientRepository,
     private val movements: MovementRepository,
 ) : ViewModel() {
+    private val epoch = writeEpoch(saved, movements::currentEpoch)
 
     private val clientId: String = checkNotNull(saved[CLIENT_ID_ARG])
     private val type: MovementType = MovementType.valueOf(checkNotNull(saved[TYPE_ARG]))
@@ -119,7 +121,7 @@ class MovementFormViewModel(
         _state.update { it.copy(saving = true, failure = null, rejection = null) }
         viewModelScope.launch {
             val result = try {
-                movements.register(requestId, clientId, type, input)
+                movements.register(requestId, clientId, type, input, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

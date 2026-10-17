@@ -7,6 +7,7 @@ import com.example.pagaya.data.ClientRepository
 import com.example.pagaya.data.MovementRepository
 import com.example.pagaya.data.backup.BackupService
 import com.example.pagaya.data.backup.ContentResolverDocuments
+import com.example.pagaya.data.backup.RestoreService
 import com.example.pagaya.data.local.PagaYaDatabase
 import java.io.File
 import java.time.Clock
@@ -36,6 +37,11 @@ class AppContainer(context: Context) {
             appVersion = appVersion(),
             documents = ContentResolverDocuments(appContext.contentResolver),
         )
+    }
+
+    val restoreService: RestoreService by lazy {
+        RestoreService(appContext, database, backupService, ContentResolverDocuments(appContext.contentResolver), clock,
+            File(appContext.noBackupFilesDir, RestoreService.WORK_DIR), File(appContext.noBackupFilesDir, RestoreService.RECOVERY_DIR))
     }
 
     private fun appVersion(): String {

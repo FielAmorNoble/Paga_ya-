@@ -52,7 +52,7 @@ Arquitectura por capas pequeña, con presentación MVVM y flujo unidireccional: 
 - **Dominio:** modelos simples y funciones puras de dinero, orden e integridad. Sin Android ni una clase de caso de uso para cada botón.
 - **Repositorio:** único punto de escritura de cuentas, transacciones, validación final, control de versión e idempotencia.
 - **Room/DAO:** persistencia y consultas parametrizadas; saldos agregados, no sincronización.
-- **BackupService:** captura consistente, formato, validación y restauración. Reutiliza las mismas reglas de negocio.
+- **BackupService / RestoreService:** captura/exportación y restauración con un único formato/validador; staging Room y reemplazo transaccional. Reutilizan las mismas reglas de negocio.
 - **DriveGateway:** autorización/transporte/retención, sin decisiones financieras.
 
 Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Koin inicialmente. Interfaces donde exista un límite que se pruebe o sustituya, como repositorio o Drive; evitar duplicar cada entidad en tres modelos idénticos. Estas decisiones adaptan las [recomendaciones de arquitectura Android](https://developer.android.com/topic/architecture/recommendations) al tamaño del proyecto.
@@ -83,6 +83,8 @@ Se sustituye la propuesta de `kotlinx.serialization` para este contrato cerrado.
 El costo es mantener un analizador propio: gramática, escapes ASCII, UTF-8 inválido, pares sustitutos, límites, lectura anticipada de los búferes y compatibilidad entre JVM y Android requieren regresiones. También hay dos lectores que revisar si cambia el contrato de snapshots. Las pruebas incluyen cadenas virtuales enormes sin materializarlas, Unicode en los límites, ZIP manipulado y archivos históricos sintéticos. Cualquier extensión debe actualizar contrato y pruebas; reconsiderar una biblioteca si reduce este costo conservando las mismas comprobaciones. Esta decisión no supone que una biblioteca general sea incapaz de implementarlas.
 
 La lectura y escritura son por streaming de bytes/caracteres, pero la captura Room y la validación **conservan listas de filas en memoria** para comprobar relaciones e historial. No se promete memoria constante. Las listas de captura dejan de estar referenciadas antes de validar; el GC decide cuándo libera su memoria. Las mediciones y su alcance están en [19 — Respaldo en archivo](19_Respaldo_Archivo.md).
+
+En la iteración 09 el mismo validador entrega las filas ya comprobadas al importador Room, sin un segundo parser. Después de importar se dejan de referenciar las listas globales; el staging se comprueba por cuenta con las mismas reglas y se copia por cursores a la transacción operativa. La cuenta mayor todavía puede requerir memoria proporcional. No se intercambian bases abiertas. Exclusión, épocas, protección previa y marcador de commit en [20 — Restauración](20_Restauracion_Archivo.md).
 
 ## Estructura del repositorio
 

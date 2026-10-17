@@ -1,5 +1,6 @@
 package com.example.pagaya.ui.clients
 
+import com.example.pagaya.ui.common.writeEpoch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -69,6 +70,7 @@ class ClientDetailViewModel(
     private val clients: ClientRepository,
     private val movements: MovementRepository,
 ) : ViewModel() {
+    private val epoch = writeEpoch(savedState, clients::currentEpoch)
     private val clientId: String = checkNotNull(savedState[ClientFormViewModel.CLIENT_ID_ARG])
     private val retries = MutableStateFlow(0)
     private val _state = MutableStateFlow<ClientDetailState>(ClientDetailState.Loading)
@@ -155,7 +157,7 @@ class ClientDetailViewModel(
         _payFull.value = current.copy(saving = true, failure = null)
         viewModelScope.launch {
             val result = try {
-                movements.payFullBalance(payFullRequestId, clientId, current.amountCop, payFullDate)
+                movements.payFullBalance(payFullRequestId, clientId, current.amountCop, payFullDate, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -196,7 +198,7 @@ class ClientDetailViewModel(
         val name = (_state.value as? ClientDetailState.Loaded)?.account?.client?.name.orEmpty()
         viewModelScope.launch {
             val result = try {
-                clients.archive(clientId)
+                clients.archive(clientId, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -227,7 +229,7 @@ class ClientDetailViewModel(
         _reactivateFailed.value = false
         viewModelScope.launch {
             val result = try {
-                clients.reactivate(clientId)
+                clients.reactivate(clientId, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

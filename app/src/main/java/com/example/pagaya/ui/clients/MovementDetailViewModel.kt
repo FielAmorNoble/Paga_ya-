@@ -1,5 +1,6 @@
 package com.example.pagaya.ui.clients
 
+import com.example.pagaya.ui.common.writeEpoch
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -68,6 +69,7 @@ class MovementDetailViewModel(
     private val clients: ClientRepository,
     private val movements: MovementRepository,
 ) : ViewModel() {
+    private val epoch = writeEpoch(savedState, movements::currentEpoch)
     private val movementId: String = checkNotNull(savedState[MOVEMENT_ID_ARG])
     private val retries = MutableStateFlow(0)
     private val _state = MutableStateFlow<MovementDetailState>(MovementDetailState.Loading)
@@ -152,7 +154,7 @@ class MovementDetailViewModel(
         _annul.value = current.copy(saving = true, failure = null, rejection = null)
         viewModelScope.launch {
             val result = try {
-                movements.annul(annulRequestId, movementId, annulExpectedVersion, current.reason)
+                movements.annul(annulRequestId, movementId, annulExpectedVersion, current.reason, epoch.await())
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 
 /** Operación de copia en curso o su resultado. */
 sealed interface BackupOperation {
@@ -70,6 +71,7 @@ class BackupViewModel(
 
     private val _state = MutableStateFlow(BackupUiState())
     val state: StateFlow<BackupUiState> = _state.asStateFlow()
+    private val cleanup: Job
 
     init {
         val pendingId = savedState.get<String>(PENDING_ID)
@@ -84,7 +86,7 @@ class BackupViewModel(
             }
             else -> clearPending()
         }
-        viewModelScope.launch {
+        cleanup = viewModelScope.launch {
             try {
                 service.recoverInterrupted(keepBackupId = savedState.get<String>(PENDING_ID))
             } catch (e: CancellationException) {
@@ -109,6 +111,7 @@ class BackupViewModel(
         if (_state.value.operation.busy) return
         _state.update { it.copy(operation = BackupOperation.Preparing) }
         viewModelScope.launch {
+            cleanup.join()
             when (val result = service.prepare()) {
                 is PrepareResult.Ready -> {
                     savedState[PENDING_ID] = result.backupId

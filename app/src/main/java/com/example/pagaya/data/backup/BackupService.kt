@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -116,10 +115,9 @@ class BackupService(
     private val validator = BackupValidator(limits)
 
     /** Una sola preparación o exportación a la vez: un segundo intento simultáneo recibe Busy. */
-    private val userOperation = Mutex()
+    private val userOperation = db.coordination.operation
 
     /** Serializa todo acceso a registros, captura pendiente y temporales; la limpieza solo hace esperar. */
-    private val stateLock = Mutex()
 
     /** Captura preparada y validada, a la espera de destino o de un reintento. */
     private class Prepared(val backupId: String, val archive: File, val manifest: BackupManifest)
@@ -139,7 +137,7 @@ class BackupService(
     suspend fun prepare(): PrepareResult = withContext(ioDispatcher) {
         if (!userOperation.tryLock()) return@withContext PrepareResult.Busy
         try {
-            stateLock.withLock { prepareLocked() }
+            prepareLocked()
         } finally {
             userOperation.unlock()
         }
@@ -188,7 +186,7 @@ class BackupService(
         withContext(ioDispatcher + NonCancellable) {
             if (!userOperation.tryLock()) return@withContext ExportResult.Busy
             try {
-                stateLock.withLock { exportLocked(backupId, destination, onPhase) }
+                exportLocked(backupId, destination, onPhase)
             } finally {
                 userOperation.unlock()
             }
@@ -250,7 +248,7 @@ class BackupService(
 
     /** La usuaria cerró el selector sin elegir destino: no es éxito ni error; se descarta la captura. */
     suspend fun cancel(backupId: String) = withContext(ioDispatcher + NonCancellable) {
-        stateLock.withLock { abandon(backupId, "CANCELADO") }
+        userOperation.withLock { abandon(backupId, "CANCELADO") }
     }
 
     /**
@@ -259,7 +257,7 @@ class BackupService(
      * y la captura pendiente de este proceso.
      */
     suspend fun recoverInterrupted(keepBackupId: String?) = withContext(ioDispatcher + NonCancellable) {
-        stateLock.withLock {
+        userOperation.withLock {
             val keep = setOfNotNull(keepBackupId, pending?.backupId)
             records.findPreparing(BackupDestination.ARCHIVO)
                 .filter { it.backupId !in keep }
@@ -274,8 +272,8 @@ class BackupService(
      * Captura y escribe `data.json` y el ZIP privados. Devuelve solo el manifiesto: las listas de filas
      * dejan de estar referenciadas al volver, antes de que el validador construya las suyas.
      */
-    private fun captureAndWrite(backupId: String, archive: File): BackupManifest {
-        val capture = capture(backupId)
+    private suspend fun captureAndWrite(backupId: String, archive: File): BackupManifest {
+        val capture = db.coordination.writes.withLock { capture(backupId) }
         workDir.mkdirs()
         val dataFile = dataFile(backupId)
         try {
@@ -290,7 +288,7 @@ class BackupService(
      * cargar filas comprueba los límites del formato con conteos y bytes de texto calculados en SQLite:
      * una libreta que no cabría en un respaldo válido se rechaza sin traerla a memoria.
      */
-    private fun capture(backupId: String): LedgerCapture = db.runInTransaction<LedgerCapture> {
+    private fun capture(backupId: String, destination: BackupDestination = BackupDestination.ARCHIVO): LedgerCapture = db.runInTransaction<LedgerCapture> {
         val meta = checkNotNull(db.ledgerMetadataDao().get()) { "Falta la fila de metadata" }
         val size = records.measureLedger()
         if (size.clients > limits.maxClients || size.movements > limits.maxMovements || size.revisions > limits.maxRevisions) {
@@ -315,7 +313,7 @@ class BackupService(
         records.insert(
             BackupRecordEntity(
                 backupId = backupId,
-                destination = BackupDestination.ARCHIVO,
+                destination = destination,
                 ledgerId = meta.ledgerId,
                 localEpoch = meta.localEpoch,
                 dataRevision = meta.dataRevision,
@@ -332,6 +330,9 @@ class BackupService(
 
     /** La captura en memoria o, tras recrear el proceso, la que quedó en disco y sigue siendo válida. */
     private fun preparedCapture(backupId: String): Prepared? {
+        val current = db.ledgerMetadataDao().get() ?: return null
+        val stored = records.find(backupId, BackupDestination.ARCHIVO) ?: return null
+        if (stored.localEpoch != current.localEpoch || stored.ledgerId != current.ledgerId) return null
         pending?.takeIf { it.backupId == backupId && it.archive.isFile }?.let { return it }
         val record = records.find(backupId, BackupDestination.ARCHIVO) ?: return null
         if (record.state == BackupState.VERIFICADO) return null
@@ -369,10 +370,44 @@ class BackupService(
         errorCode: String?,
         verifiedAtMillis: Long? = null,
         locator: String? = null,
+        destination: BackupDestination = BackupDestination.ARCHIVO,
     ) {
-        val record = records.find(backupId, BackupDestination.ARCHIVO) ?: return
+        val record = records.find(backupId, destination) ?: return
         if (record.state == BackupState.VERIFICADO) return
         records.update(record.copy(state = state, errorCode = errorCode, verifiedAtMillis = verifiedAtMillis, locator = locator))
+    }
+
+    /** Solo con operation y writes ya adquiridos por RestoreService. No toma otra vez sus mutex. */
+    internal fun createRecoveryLocked(directory: File, checkpoint: (RestoreCheckpoint) -> Unit): File {
+        check(userOperation.isLocked && db.coordination.writes.isLocked)
+        check(directory.mkdirs() || directory.isDirectory)
+        val id = newId()
+        val archive = File(directory, "recovery-$id.pagaya.zip")
+        val data = File(directory, "recovery-$id.data.tmp")
+        try {
+            checkpoint(RestoreCheckpoint.RECOVERY_WRITE)
+            val manifest = writeRecovery(id, data, archive)
+            checkpoint(RestoreCheckpoint.RECOVERY_VERIFY)
+            val checked = validator.validate(archive)
+            check(checked is BackupValidation.Valid && checked.summary.manifest == manifest)
+            java.io.RandomAccessFile(archive, "rw").use { it.fd.sync() }
+            setState(id, BackupState.VERIFICADO, null, clock.millis(), archive.path, BackupDestination.RECUPERACION)
+            return archive
+        } catch (e: Exception) {
+            setState(id, BackupState.FALLIDO, "RECUPERACION", destination = BackupDestination.RECUPERACION)
+            archive.delete() // Solo este candidato incompleto; nunca una copia anterior verificada.
+            throw e
+        } finally { data.delete() }
+    }
+
+    private fun writeRecovery(id: String, data: File, archive: File): BackupManifest =
+        BackupWriter.write(capture(id, BackupDestination.RECUPERACION), appVersion, data, archive)
+
+    internal fun hasPreparingBackupLocked(): Boolean = records.findPreparing(BackupDestination.ARCHIVO).isNotEmpty()
+
+    internal fun invalidatePreparedLocked() {
+        pending?.let { abandon(it.backupId, "LIBRETA_REEMPLAZADA") }
+        pending = null
     }
 
     private fun dataFile(backupId: String) = File(workDir, "captura-$backupId.data.json.tmp")

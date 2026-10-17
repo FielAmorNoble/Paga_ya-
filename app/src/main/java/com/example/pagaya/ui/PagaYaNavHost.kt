@@ -2,6 +2,15 @@ package com.example.pagaya.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.pagaya.data.LedgerCoordination
+import com.example.pagaya.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -51,13 +60,34 @@ private const val SAVED_MOVEMENT = "savedMovement"
 private const val ARCHIVED_CLIENT = "archivedClient"
 
 @Composable
-fun PagaYaNavHost() {
-    val navController = rememberNavController()
-    val movementIdArg = listOf(navArgument(MovementDetailViewModel.MOVEMENT_ID_ARG) { type = NavType.StringType })
-    val clientIdArg = listOf(navArgument(ClientFormViewModel.CLIENT_ID_ARG) { type = NavType.StringType })
+fun PagaYaNavHost(session: LedgerSessionViewModel = viewModel(factory = LedgerSessionViewModel.Factory)) {
+    val epoch by session.epoch.collectAsStateWithLifecycle()
+    val notice by session.notice.collectAsStateWithLifecycle()
+    val failed by session.failed.collectAsStateWithLifecycle()
+    if (epoch != null) LedgerNavHost(epoch!!) else Text(stringResource(if (failed) R.string.restore_read_failed else R.string.loading))
+    notice?.let { result -> AlertDialog(
+        onDismissRequest = session::acknowledge,
+        title = { Text(stringResource(if (result.committed) R.string.restore_completed else R.string.restore_interrupted_title)) },
+        text = { Text(stringResource(if (result.committed) R.string.restore_completed_detail else R.string.restore_interrupted)) },
+        confirmButton = { TextButton(onClick = session::acknowledge) { Text(stringResource(R.string.backup_ok)) } },
+    ) }
+}
 
+@Composable
+private fun LedgerNavHost(epoch: String) {
+    val navController = rememberNavController()
+    val epochArg = listOf(navArgument(LedgerCoordination.EPOCH_ARG) { type = NavType.StringType; defaultValue = epoch })
+    val movementIdArg = epochArg + listOf(navArgument(MovementDetailViewModel.MOVEMENT_ID_ARG) { type = NavType.StringType })
+    val clientIdArg = epochArg + listOf(navArgument(ClientFormViewModel.CLIENT_ID_ARG) { type = NavType.StringType })
+
+    LaunchedEffect(epoch) {
+        if (navController.currentBackStackEntry?.arguments?.getString(LedgerCoordination.EPOCH_ARG) != epoch) {
+            navController.navigate(Routes.CLIENTS) { popUpTo(navController.graph.id) { inclusive = true }; launchSingleTop = true }
+        }
+    }
+    key(epoch) {
     NavHost(navController = navController, startDestination = Routes.CLIENTS) {
-        composable(Routes.CLIENTS) { entry ->
+        composable(Routes.CLIENTS, arguments = epochArg) { entry ->
             val archivedClient by entry.savedStateHandle.getStateFlow<String?>(ARCHIVED_CLIENT, null).collectAsStateWithLifecycle()
             ClientListScreen(
                 onOpenClient = { navController.navigate(Routes.client(it)) },
@@ -68,7 +98,7 @@ fun PagaYaNavHost() {
                 onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
             )
         }
-        composable(Routes.ARCHIVED) { entry ->
+        composable(Routes.ARCHIVED, arguments = epochArg) { entry ->
             val archivedClient by entry.savedStateHandle.getStateFlow<String?>(ARCHIVED_CLIENT, null).collectAsStateWithLifecycle()
             ArchivedClientListScreen(
                 onOpenClient = { navController.navigate(Routes.client(it)) },
@@ -77,10 +107,10 @@ fun PagaYaNavHost() {
                 onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
             )
         }
-        composable(Routes.BACKUP) {
+        composable(Routes.BACKUP, arguments = epochArg) {
             BackupScreen(onBack = { navController.popBackStack() })
         }
-        composable(Routes.NEW_CLIENT) {
+        composable(Routes.NEW_CLIENT, arguments = epochArg) {
             ClientFormScreen(
                 // HU-02: al guardar se abre la cuenta recién creada; el formulario sale de la pila.
                 onSaved = { id ->
@@ -148,4 +178,5 @@ fun PagaYaNavHost() {
             )
         }
     }
+}
 }

@@ -111,6 +111,8 @@ class MovementRepository(
     private val revisions = db.movementRevisionDao()
     private val metadata = db.ledgerMetadataDao()
 
+    suspend fun currentEpoch(): String = withContext(ioDispatcher) { checkNotNull(metadata.get()).localEpoch }
+
     /** Hoy en America/Bogota, el día inicial de un movimiento nuevo y el máximo admitido. */
     fun today(): LocalDate = BusinessCalendar.today(clock)
 
@@ -162,12 +164,13 @@ class MovementRepository(
         clientId: String,
         type: MovementType,
         input: MovementInput,
+        expectedEpoch: String? = null,
     ): RegisterMovementResult {
         val valid = when (val validation = MovementRules.validate(input, today())) {
             is MovementValidation.Invalid -> return RegisterMovementResult.Invalid(validation)
             is MovementValidation.Valid -> validation.movement
         }
-        return commit(requestId, clientId, type, MovementOrigin.MANUAL, valid, payFull = false)
+        return commit(requestId, clientId, type, MovementOrigin.MANUAL, valid, payFull = false, expectedEpoch)
     }
 
     /**
@@ -180,12 +183,13 @@ class MovementRepository(
         clientId: String,
         confirmedBalanceCop: Long,
         date: LocalDate,
+        expectedEpoch: String? = null,
     ): RegisterMovementResult {
         MovementRules.validateDate(date, today())?.let {
             return RegisterMovementResult.Invalid(MovementValidation.Invalid(amount = null, date = it, description = null))
         }
         val valid = ValidMovement(confirmedBalanceCop, date, description = null)
-        return commit(requestId, clientId, MovementType.ABONO, MovementOrigin.PAGO_TOTAL, valid, payFull = true)
+        return commit(requestId, clientId, MovementType.ABONO, MovementOrigin.PAGO_TOTAL, valid, payFull = true, expectedEpoch)
     }
 
     /**
@@ -200,6 +204,7 @@ class MovementRepository(
         movementId: String,
         expectedVersion: Long,
         input: CorrectionInput,
+        expectedEpoch: String? = null,
     ): ChangeMovementResult {
         val fields = MovementInput(input.amount, input.date, input.description)
         val valid = when (val validation = MovementRules.validate(fields, today())) {
@@ -208,15 +213,15 @@ class MovementRepository(
             )
             is MovementValidation.Valid -> validation.movement
         }
-        return change(requestId, movementId, expectedVersion, RevisionAction.EDITAR, input.reason, valid)
+        return change(requestId, movementId, expectedVersion, RevisionAction.EDITAR, input.reason, valid, expectedEpoch)
     }
 
     /**
      * Anula el movimiento [movementId]: no se borra, queda marcado como anulado y deja de contar en
      * el saldo. Exige un [reason]. No consume un orden de registro.
      */
-    suspend fun annul(requestId: String, movementId: String, expectedVersion: Long, reason: String): ChangeMovementResult =
-        change(requestId, movementId, expectedVersion, RevisionAction.ANULAR, reason, corrected = null)
+    suspend fun annul(requestId: String, movementId: String, expectedVersion: Long, reason: String, expectedEpoch: String? = null): ChangeMovementResult =
+        change(requestId, movementId, expectedVersion, RevisionAction.ANULAR, reason, corrected = null, expectedEpoch)
 
     private suspend fun change(
         requestId: String,
@@ -225,14 +230,15 @@ class MovementRepository(
         action: RevisionAction,
         rawReason: String,
         corrected: ValidMovement?,
+        expectedEpoch: String?,
     ): ChangeMovementResult = withContext(ioDispatcher) {
-        db.runInTransaction<ChangeMovementResult> {
+        db.writeInEpoch<ChangeMovementResult>(expectedEpoch) {
             val reason = rawReason.trim()
 
             // 1. Idempotencia: la revisión lleva el ID del intento. Si ya existe, es el mismo intento.
             revisions.findById(requestId)?.let { previous ->
                 val now = movements.findById(movementId)
-                return@runInTransaction if (now != null && previous.isSameAttempt(movementId, expectedVersion, action, reason, now, corrected)) {
+                return@writeInEpoch if (now != null && previous.isSameAttempt(movementId, expectedVersion, action, reason, now, corrected)) {
                     ChangeMovementResult.Saved(movementId, previous.newVersion)
                 } else {
                     ChangeMovementResult.Conflict
@@ -240,11 +246,11 @@ class MovementRepository(
             }
 
             // 2. Lectura del movimiento, de su estado y de la versión esperada.
-            val current = movements.findById(movementId) ?: return@runInTransaction ChangeMovementResult.NotFound
-            if (!current.active) return@runInTransaction ChangeMovementResult.AlreadyAnnulled
-            if (current.version != expectedVersion) return@runInTransaction ChangeMovementResult.VersionConflict
-            val client = clients.findById(current.clientId) ?: return@runInTransaction ChangeMovementResult.NotFound
-            if (!client.active) return@runInTransaction ChangeMovementResult.ClientArchived
+            val current = movements.findById(movementId) ?: return@writeInEpoch ChangeMovementResult.NotFound
+            if (!current.active) return@writeInEpoch ChangeMovementResult.AlreadyAnnulled
+            if (current.version != expectedVersion) return@writeInEpoch ChangeMovementResult.VersionConflict
+            val client = clients.findById(current.clientId) ?: return@writeInEpoch ChangeMovementResult.NotFound
+            if (!client.active) return@writeInEpoch ChangeMovementResult.ClientArchived
 
             // 3. Estado candidato. Corregir sin modificar nada no escribe nada.
             val candidate = if (corrected == null) {
@@ -260,10 +266,10 @@ class MovementRepository(
             if (corrected != null && candidate.date == current.date && candidate.amountCop == current.amountCop &&
                 candidate.description == current.description
             ) {
-                return@runInTransaction ChangeMovementResult.Unchanged
+                return@writeInEpoch ChangeMovementResult.Unchanged
             }
             MovementRules.validateReason(reason)?.let {
-                return@runInTransaction ChangeMovementResult.Invalid(CorrectionInvalid(reason = it))
+                return@writeInEpoch ChangeMovementResult.Invalid(CorrectionInvalid(reason = it))
             }
 
             // 4. Toda la secuencia vigente, con el estado candidato, debe seguir siendo válida.
@@ -273,7 +279,7 @@ class MovementRepository(
             } else {
                 LedgerRules.rejectionForChange(existing, candidate.toLedgerEntry())
             }
-            rejection?.let { return@runInTransaction ChangeMovementResult.Rejected(it) }
+            rejection?.let { return@writeInEpoch ChangeMovementResult.Rejected(it) }
 
             // 5. Escritura: revisión con el snapshot completo anterior, movimiento y revisión de datos.
             //    No se consume un orden de registro: el orden original no cambia.
@@ -342,11 +348,12 @@ class MovementRepository(
         origin: MovementOrigin,
         valid: ValidMovement,
         payFull: Boolean,
+        expectedEpoch: String?,
     ): RegisterMovementResult = withContext(ioDispatcher) {
-        db.runInTransaction<RegisterMovementResult> {
+        db.writeInEpoch<RegisterMovementResult>(expectedEpoch) {
             // 1. Idempotencia: el mismo intento ya guardado no se repite ni cuenta otra revisión.
             movements.findById(requestId)?.let { existing ->
-                return@runInTransaction if (existing.isSameAttempt(clientId, type, origin, valid)) {
+                return@writeInEpoch if (existing.isSameAttempt(clientId, type, origin, valid)) {
                     RegisterMovementResult.Saved(existing.id)
                 } else {
                     RegisterMovementResult.Conflict
@@ -354,8 +361,8 @@ class MovementRepository(
             }
 
             // 2. Cliente activo y movimientos vigentes, leídos dentro de la transacción.
-            val client = clients.findById(clientId) ?: return@runInTransaction RegisterMovementResult.ClientNotFound
-            if (!client.active) return@runInTransaction RegisterMovementResult.ClientArchived
+            val client = clients.findById(clientId) ?: return@writeInEpoch RegisterMovementResult.ClientNotFound
+            if (!client.active) return@writeInEpoch RegisterMovementResult.ClientArchived
             val existing = movements.findActiveByClient(clientId).map { it.toLedgerEntry() }
 
             // 3. Orden de registro que recibiría el alta. Solo se consume (paso 5) si todo es válido.
@@ -365,18 +372,18 @@ class MovementRepository(
                 val balance = try {
                     LedgerRules.balance(existing)
                 } catch (e: ArithmeticException) {
-                    return@runInTransaction RegisterMovementResult.Rejected(HistoryRejection.Overflow)
+                    return@writeInEpoch RegisterMovementResult.Rejected(HistoryRejection.Overflow)
                 }
                 // Una cuenta ya sin deuda también es un saldo distinto del confirmado.
-                if (balance <= 0) return@runInTransaction RegisterMovementResult.BalanceChanged(0)
-                if (balance != valid.amountCop) return@runInTransaction RegisterMovementResult.BalanceChanged(balance)
-                if (balance > MovementRules.AMOUNT_MAX) return@runInTransaction RegisterMovementResult.ExceedsLimit(balance)
+                if (balance <= 0) return@writeInEpoch RegisterMovementResult.BalanceChanged(0)
+                if (balance != valid.amountCop) return@writeInEpoch RegisterMovementResult.BalanceChanged(balance)
+                if (balance > MovementRules.AMOUNT_MAX) return@writeInEpoch RegisterMovementResult.ExceedsLimit(balance)
             }
 
             // 4. Historial candidato: ningún saldo intermedio negativo, sin desbordamientos.
             val candidate = LedgerEntry(requestId, valid.date, entryOrder, type, origin, valid.amountCop, valid.description)
             LedgerRules.rejectionFor(existing, candidate)?.let {
-                return@runInTransaction RegisterMovementResult.Rejected(it)
+                return@writeInEpoch RegisterMovementResult.Rejected(it)
             }
 
             // 5. Escritura: movimiento, orden consumido y revisión de datos, todo o nada.

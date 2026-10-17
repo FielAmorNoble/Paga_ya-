@@ -311,4 +311,32 @@
     <string name="backup_privacy">Esta copia contiene los nombres, teléfonos y cuentas de tus clientes. Guárdala en un lugar privado y no la compartas.</string>
     <string name="backup_outside_phone">Una copia guardada solo en este teléfono no te protege si lo pierdes o se daña. Guarda también una copia fuera de él, por ejemplo en tu computador o en una memoria.</string>
     <string name="backup_cloud_note">Guardar en una carpeta de este teléfono funciona sin Internet. Si eliges una carpeta en la nube, puede necesitar conexión.</string>
+    <!-- Restauración manual -->
+    <string name="restore_from_file">Restaurar desde archivo</string>
+    <string name="restore_previous">Recuperar datos anteriores</string>
+    <string name="restore_preview_title">Revisar copia</string>
+    <string name="restore_replace_warning">Esta copia reemplazará las cuentas de este teléfono</string>
+    <string name="restore_capture">Copia del %1$s</string>
+    <string name="restore_source_counts">Copia — Clientes: %1$d. Movimientos: %2$d. Revisiones: %3$d.</string>
+    <string name="restore_pending">Total pendiente de la copia: %1$s</string>
+    <string name="restore_current_counts">Ahora — Clientes: %1$d. Movimientos: %2$d. Revisiones: %3$d. Total pendiente: %4$s</string>
+    <string name="restore_empty_warning">Esta copia está vacía y reemplazará una libreta que tiene datos. Al continuar, las cuentas actuales dejarán de aparecer.</string>
+    <string name="restore_recovery_explanation">Antes de reemplazar tus cuentas guardaremos y comprobaremos una copia privada para recuperar el estado anterior. Esa copia está solo en este teléfono: no protege frente a su pérdida.</string>
+    <string name="restore_changed">Las cuentas cambiaron desde la revisión anterior. Revisa esta comparación actualizada y confirma de nuevo.</string>
+    <string name="restore_confirm">Restaurar cuentas</string>
+    <string name="restore_cancel">Cancelar</string>
+    <string name="restore_validating">Comprobando el archivo y las cuentas de la copia…</string>
+    <string name="restore_applying">Guardando la protección previa y recuperando las cuentas…</string>
+    <string name="restore_busy">Hay otra operación de respaldo en curso. Termínala o cancélala antes de restaurar.</string>
+    <string name="restore_future">La copia contiene fechas posteriores a hoy. Revisa el reloj del teléfono y vuelve a elegirla. No se cambiaron las cuentas ni las fechas.</string>
+    <string name="restore_invalid">El archivo no es una copia válida o compatible de Paga Ya!. Tus cuentas no cambiaron.</string>
+    <string name="restore_too_large">La copia supera los límites admitidos. Tus cuentas no cambiaron.</string>
+    <string name="restore_read_failed">No se pudo leer la copia. Vuelve a elegir un archivo accesible.</string>
+    <string name="restore_recovery_failed">No se pudo guardar y comprobar la protección previa. Tus cuentas no cambiaron. Revisa el espacio disponible y vuelve a intentarlo.</string>
+    <string name="restore_failed">No se pudieron recuperar las cuentas. La libreta anterior se conserva.</string>
+    <string name="restore_expired">La revisión anterior ya no está disponible. Elige la copia y revísala de nuevo.</string>
+    <string name="restore_interrupted_title">Restauración interrumpida</string>
+    <string name="restore_interrupted">La restauración no llegó a confirmarse. Las cuentas anteriores se conservan. Elige la copia de nuevo si deseas intentarlo.</string>
+    <string name="restore_completed">Cuentas restauradas</string>
+    <string name="restore_completed_detail">Las cuentas se recuperaron completas. Las pantallas anteriores se cerraron. Guarda una copia externa de los cambios que hagas a partir de ahora.</string>
 </resources>

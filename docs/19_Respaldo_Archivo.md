@@ -2,6 +2,8 @@
 
 Fecha: 2026-10-16. Iteración 08, en `develop`, sobre `90b866b` (iteración 07). Sin commits: los cambios están pendientes de revisión.
 
+**Nota histórica, 2026-10-17:** la iteración 08 quedó confirmada en `ca141b3`. Las afirmaciones de ausencia de restauración de este documento describen ese cierre. La iteración 09 implementa y prueba restauración desde archivo y recuperación anterior: ver [20](20_Restauracion_Archivo.md). No cambia el contrato ni los límites siguientes; sus mediciones de exportación no son mediciones de restauración. Drive sigue pendiente y HU-09 parcial.
+
 **Objetivo:** guardar una copia completa de la libreta en un archivo que la usuaria elige con el selector de Android. La app solo dice «Copia guardada y comprobada» después de volver a leer ese archivo y validarlo.
 
 **No incluye:** restauración, Google Drive, respaldo automático ni retención de copias.

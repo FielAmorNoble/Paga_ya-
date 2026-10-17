@@ -4,6 +4,8 @@
 
 La libreta opera completamente en SQLite local. El respaldo es una instantánea completa, no una sincronización. V1 incluye exportación manual a archivo, respaldo manual a Google Drive y restauración desde ambos. El backup automático se reserva para V1.1.
 
+Estado al 2026-10-17: exportación y restauración **desde archivo** implementadas, incluida recuperación privada del estado anterior. El formato y límites de la iteración 08 no cambian. Google Drive sigue pendiente y HU-09 no está completa. El protocolo ejecutado, la exclusión `operation → writes → Room` y evidencia están en [20](20_Restauracion_Archivo.md).
+
 Un teléfono sin Internet puede registrar, buscar, corregir y exportar a un destino local. Drive requiere red solo mientras se autoriza, sube, lista o descarga. No se crea una cola de movimientos financieros para enviar después.
 
 ## Alternativas analizadas
@@ -144,6 +146,8 @@ Siete copias ayudan frente a errores recientes, pero no garantizan recuperar un 
 Todos los accesos de escritura pasan por el repositorio y respetan esta exclusión. El backup de recuperación y el marcador pertenecen a la instalación, no se importan como pruebas de éxito desde el archivo externo.
 
 Si se restaura una copia equivocada, abrir «Recuperar datos anteriores» y aplicar el mismo validador/protocolo a la copia previa. Importar dos veces el mismo backup reemplaza el estado, no duplica filas.
+
+Implementación de iteración 09: cada protección previa tiene nombre privado único e inmutable; el puntero activo cambia solo en el commit. Se conservan copias verificadas extra, incluso de intentos abortados, sin rotación automática. La limpieza solo retira temporales propios. Estas copias ocupan espacio y no cuentan como protección externa. No se mantiene transacción durante la vista previa; se comprueban identidad, época y revisión al confirmar y se exige otra revisión si cambiaron.
 
 ## Recuperación ante pérdida del teléfono
 

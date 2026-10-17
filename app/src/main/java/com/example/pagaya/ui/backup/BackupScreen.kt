@@ -25,6 +25,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -44,7 +47,8 @@ import com.example.pagaya.ui.common.formatDateTime
 
 /**
  * «Respaldo» (docs/06): guardar una copia en un archivo elegido con el selector del sistema. Solo se
- * anuncia «Copia guardada» después de releer y validar el archivo. Sin restauración ni Drive todavía.
+ * anuncia «Copia guardada» después de releer y validar el archivo. Restauración con vista previa;
+ * Drive sigue pendiente.
  */
 @Composable
 fun BackupScreen(
@@ -52,6 +56,7 @@ fun BackupScreen(
     viewModel: BackupViewModel = viewModel(factory = BackupViewModel.Factory),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var restoreBusy by remember { mutableStateOf(false) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(BackupFormat.MIME_TYPE)) { uri ->
         viewModel.onDestinationChosen(uri?.toString())
     }
@@ -80,11 +85,12 @@ fun BackupScreen(
             OperationMessage(state.operation, onRetry = viewModel::onRetry, onDismiss = viewModel::onMessageShown)
             Button(
                 onClick = viewModel::onSave,
-                enabled = !state.operation.busy,
+                enabled = !state.operation.busy && !restoreBusy,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
             ) {
                 Text(stringResource(R.string.backup_save_file), style = MaterialTheme.typography.titleMedium)
             }
+            RestoreSection(backupBusy = state.operation.busy, onBusy = { restoreBusy = it })
             Explanation()
         }
     }

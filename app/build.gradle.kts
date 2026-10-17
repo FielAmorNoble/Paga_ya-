@@ -37,6 +37,12 @@ android {
             applicationIdSuffix = ".qa"
             matchingFallbacks += listOf("debug")
         }
+        // Segundo entorno vacío para ensayar restauración sin borrar la QA existente.
+        create("qaRestore") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".qa.restore"
+            matchingFallbacks += listOf("qa", "debug")
+        }
         // Aplicación normal, sin sufijo. Sin firma de distribución configurada (VP-05).
         release {
             isMinifyEnabled = false
