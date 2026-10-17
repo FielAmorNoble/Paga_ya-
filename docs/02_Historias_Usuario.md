@@ -99,12 +99,12 @@ Todas las historias son obligatorias para V1. Se conserva la numeración origina
 **Como** vendedora, **quiero** guardar y recuperar una copia de mis cuentas, **para** no perder la libreta al cambiar de teléfono.
 
 1. «Guardar copia en archivo» funciona sin Internet al elegir almacenamiento local.
-2. «Guardar copia en Google Drive» solicita permiso cuando se usa por primera vez y permite cancelar sin afectar las cuentas.
-3. La aplicación distingue última copia local verificada, última copia Drive verificada y cambios posteriores sin respaldar.
+2. La misma acción permite elegir una carpeta de Google Drive en el selector Android, sin permisos propios de la app; cancelar no afecta las cuentas. (Actualizado 2026-10-17: Drive mediante el selector.)
+3. La aplicación muestra la última copia verificada y si hay cambios posteriores sin respaldar. No distingue local de Drive; la copia en la nube se confirma en Drive.
 4. Las copias incluyen clientes archivados, movimientos anulados y revisiones, no solo los saldos visibles.
-5. La nueva copia se valida antes de aplicar la retención de siete copias regulares por libreta.
-6. Restaurar permite elegir un archivo o una copia Drive, conocer fecha y cantidades, y confirmar que reemplazará la libreta actual.
+5. La nueva copia se valida antes de anunciar éxito. Sin retención automática en V1: la app no borra copias.
+6. Restaurar permite elegir un archivo local o de Drive en el selector, conocer fecha y cantidades, y confirmar que reemplazará la libreta actual.
 7. Un archivo corrupto, incompatible o inconsistente se rechaza antes de cambiar datos vigentes.
 8. Antes de sustituir una libreta existente se conserva una copia de recuperación local; si falla esa protección, se cancela la restauración.
-9. Una instalación nueva recupera los mismos datos desde archivo o desde Drive de la misma cuenta y aplicación autorizada.
-10. Perder la red, revocar permisos o cerrar la app durante una subida no impide continuar el trabajo local ni convierte el intento en un respaldo exitoso.
+9. Una instalación nueva recupera los mismos datos desde un archivo local o desde Drive de la misma cuenta, elegido en el selector.
+10. Perder la red o cerrar la app durante una exportación no impide continuar el trabajo local ni convierte un intento fallido en éxito. Sin red, Drive puede aceptar el archivo y subirlo después: la usuaria lo confirma en Drive.

@@ -1,5 +1,7 @@
 # 14 — Ramas y entornos de desarrollo
 
+> Actualización 2026-10-17: release usa `com.fielamornoble.pagaya` y admite firma oficial local; Dev/QA conservan sus identificadores. Ver [21](21_Firma_Distribucion.md). Los resultados de esta iteración original se conservan como evidencia histórica.
+
 Fecha: 2026-10-12. Iteración 03: política de ramas y separación entre la aplicación de desarrollo y la normal. No incluye funcionalidades de negocio ni cambios del esquema Room.
 
 ## Política de ramas

@@ -2,11 +2,11 @@
 
 ## Contrato de V1
 
-La libreta opera completamente en SQLite local. El respaldo es una instantánea completa, no una sincronización. V1 incluye exportación manual a archivo, respaldo manual a Google Drive y restauración desde ambos. El backup automático se reserva para V1.1.
+La libreta opera completamente en SQLite local. El respaldo es una instantánea completa, no una sincronización. V1 incluye exportación manual a un archivo y restauración desde un archivo, ambos con el selector de archivos de Android. **Google Drive se usa como un destino más de ese selector** (decisión del propietario, 2026-10-17, [21](21_Firma_Distribucion.md)): la cuenta, la carpeta y la subida las gestiona la app Drive instalada. Integración directa con la API de Drive, OAuth propio, cuenta de servicio, Google Cloud, appDataFolder, respaldo automático y retención automática quedan **fuera de V1**.
 
-Estado al 2026-10-17: exportación y restauración **desde archivo** implementadas, incluida recuperación privada del estado anterior. El formato y límites de la iteración 08 no cambian. Google Drive sigue pendiente y HU-09 no está completa. El protocolo ejecutado, la exclusión `operation → writes → Room` y evidencia están en [20](20_Restauracion_Archivo.md).
+Estado al 2026-10-17: exportación y restauración desde archivo implementadas, incluida recuperación privada del estado anterior. El formato y límites de la iteración 08 no cambian. Exportación a una carpeta de Drive, confirmación desde Drive web y restauración desde Drive en otra instalación **comprobadas** con APK oficial firmado y datos sintéticos: ver [22](22_Validacion_Release_Drive.md). El protocolo de restauración, la exclusión `operation → writes → Room` y su evidencia están en [20](20_Restauracion_Archivo.md).
 
-Un teléfono sin Internet puede registrar, buscar, corregir y exportar a un destino local. Drive requiere red solo mientras se autoriza, sube, lista o descarga. No se crea una cola de movimientos financieros para enviar después.
+Un teléfono sin Internet puede registrar, buscar, corregir y exportar a un destino local. Si se elige Drive sin conexión, la app Drive puede aceptar el archivo y dejarlo pendiente de subida: la app no puede saber cuándo llega a la nube. No se crea una cola de movimientos financieros para enviar después.
 
 ## Alternativas analizadas
 
@@ -76,63 +76,52 @@ Antes de cargar listas, `prepare` obtiene conteos y bytes UTF-8 variables en SQL
 2. Escribir `data.json` en un archivo temporal privado, con hash y conteos; cerrar la transacción antes de cualquier operación de red.
 3. Crear manifiesto y ZIP, cerrar y volver a abrir con el mismo validador usado para restaurar.
 4. Si se exporta, usar `ACTION_CREATE_DOCUMENT` y copiar al destino elegido. Cerrar, reabrir y validar antes de marcar «Copia exportada»; si el proveedor no permite verificar, informar que no se confirmó y no actualizar el indicador de éxito.
-5. Si se envía a Drive, seguir la verificación remota descrita abajo.
+5. Si el destino elegido es una carpeta de Drive, es el mismo paso 4: la relectura la responde el proveedor y puede venir de su caché local (ver «Google Drive mediante el selector Android»).
 6. Registrar éxito, destino, backup_id, revisión y hora únicamente al terminar la verificación correspondiente.
 
 Mientras se obtiene el snapshot puede mostrarse una espera breve. Después de capturarlo se permiten nuevos movimientos durante la subida: el backup protege la revisión capturada, no los cambios posteriores. Si la revisión o la época local actual difieren de las capturadas, mostrar «Hay cambios sin respaldar». La época es metadata de esta instalación, no parte del archivo portable.
 
-Un cierre o falta de espacio elimina/deja identificados los temporales incompletos, no una copia válida. En el próximo inicio limpiar solo temporales conocidos; no borrar archivos de usuario. Las operaciones de backup se serializan entre sí para evitar carreras en retención. No iniciar restauración durante un backup en curso: permitir terminarlo o cancelarlo primero.
+Un cierre o falta de espacio elimina/deja identificados los temporales incompletos, no una copia válida. En el próximo inicio limpiar solo temporales conocidos; no borrar archivos de usuario. Las operaciones de backup se serializan entre sí. No iniciar restauración durante un backup en curso: permitir terminarlo o cancelarlo primero.
 
-## Google Drive dentro de V1
+## Google Drive mediante el selector Android (V1)
 
-### Autorización
+### Decisión
 
-Registrar un proyecto de Google, habilitar Drive API, configurar consentimiento y cliente Android con identificador de paquete y SHA-1 de la firma release. Esto es configuración de acceso, no un servidor contratado. Separar pruebas y producción; una copia creada con otra identidad de aplicación puede no ser visible para la definitiva.
+Drive se usa a través del selector del sistema (`ACTION_CREATE_DOCUMENT` para guardar, `ACTION_OPEN_DOCUMENT` para restaurar), igual que cualquier otra carpeta. La app no pide permisos de Google, no guarda tokens ni cuentas y no llama a la API de Drive. No hace falta proyecto de Google Cloud, pantalla de consentimiento, cliente OAuth, cuenta de servicio ni appDataFolder. Esta decisión sustituye el plan anterior de integración directa (autorización `drive.appdata`, subida reanudable, `about.get`, listado por `appProperties`), que queda como referencia histórica para una versión futura.
 
-Solicitar `https://www.googleapis.com/auth/drive.appdata` al pulsar «Conectar Google Drive». Está clasificado como no sensible; aun así hay configuración de consentimiento y requisitos de publicación que deben comprobarse para el uso real. No solicitar acceso completo a Drive. [Scopes oficiales](https://developers.google.com/workspace/drive/api/guides/api-specific-auth).
+Consecuencias:
 
-Usar `AuthorizationClient` para autorización de datos. No crear cuentas propias, contraseña de app, backend OAuth, secreto de cliente embebido ni flujo de refresh tokens mantenido por nosotros. Solicitar un token cuando haga falta y gestionar resolución/revocación. No registrar tokens en logs. La autorización es independiente de un inicio de sesión obligatorio en Paga Ya!. [Autorización Android](https://developer.android.com/identity/authorization).
+- **Ventajas:** sin configuración en Google ni dependencia de la firma para acceder a las copias; el archivo es visible y descargable en Mi unidad, desde Drive web u otro teléfono; la identidad de la app no condiciona la recuperación.
+- **Costos:** la usuaria elige cuenta y carpeta cada vez (el selector suele recordar la última); el archivo es visible para quien acceda a esa cuenta; no hay lista de copias dentro de la app; la app no distingue un destino de Drive de uno local.
 
-La respuesta de autorización por sí sola no aporta identidad de cuenta. Consultar `about.get(fields=user(emailAddress,permissionId))` para mostrar la cuenta efectiva y asociar estados de backup; el método acepta el scope appdata. Si no se puede identificar/verificar la cuenta, no reutilizar el historial remoto de otra. [Referencia about.get](https://developers.google.com/workspace/drive/api/reference/rest/v3/about/get).
+### Qué comprueba la app y qué no
 
-### Uso de appDataFolder
+- Tras guardar, la app reabre el documento, lo copia y lo valida completo antes de decir «Copia guardada y comprobada». Esa relectura la responde el proveedor.
+- **La relectura no demuestra que el archivo esté en la nube.** Sin conexión, la app Drive acepta el archivo, lo sirve desde su caché local y la app muestra el mismo éxito; la subida ocurre después, cuando hay red (comprobado en [22](22_Validacion_Release_Drive.md)). La confirmación de que la copia está en Drive se hace mirando Drive web u otro dispositivo.
+- La app no sabe qué cuenta ni qué carpeta se usó. `backup_registro` conserva el `destino` `ARCHIVO` y el URI devuelto por el proveedor; no se registra una «última copia en Drive» separada.
+- No se promete que Drive permita guardar o abrir archivos sin Internet: depende de la app Drive y de su caché. Abrir sin conexión una copia que nunca estuvo en este teléfono puede fallar; la restauración entonces no cambia nada.
 
-Usar `parents: ["appDataFolder"]` al crear y `spaces=appDataFolder` al listar. Es un espacio oculto accesible a la aplicación; no es una carpeta navegable en Mi unidad ni el backup automático del teléfono. Sus archivos no se comparten ni van a la papelera. El usuario puede eliminar los datos de la aplicación desde Drive; quitar la app de Mi unidad también puede eliminar ese espacio. Desinstalar el APK del teléfono no debe confundirse con esa acción en Drive. [Datos propios de aplicaciones](https://developers.google.com/workspace/drive/api/guides/appdata).
+### Sobrescribir un archivo existente
 
-Ventaja para la usuaria: no organizar carpetas. Costo: la recuperación depende de Paga Ya! y de conservar su configuración Google. Por eso la exportación a archivo independiente también es obligatoria.
-
-### Subida, identificación y verificación
-
-- Cada captura crea un archivo nuevo. Guardar en `appProperties` identificadores de formato, libreta y backup; son índices de búsqueda, no prueba de integridad.
-- Usar subida reanudable para archivos de tamaño variable; persistir sesión de forma privada si es necesaria. No exponer URLs de sesión ni autorizaciones.
-- Descargar la copia recién subida a un temporal privado y validar contenido/checksum antes de marcar éxito. El estado remoto HTTP exitoso por sí solo no garantiza que el contenido sea restaurable.
-- Si se pierde la respuesta, consultar por backup_id antes de repetir. Si aparece más de una copia por un reintento, validar, conservar una y contar el backup lógico una sola vez.
-- Listar con paginación y campos mínimos; no asumir que la primera página contiene todas las copias ni confiar en orden del nombre. Descargar/validar la elegida antes de restaurar.
-- Tokens vencidos: renovar autorización una vez y, si requiere interacción, volver al consentimiento. 403 requiere distinguir cuota, permiso o configuración; 429/5xx admiten reintento acotado con espera y cancelación. Nunca reintentar indefinidamente.
-
-Los protocolos de subida y los límites deben seguir la [guía de subidas](https://developers.google.com/workspace/drive/api/guides/manage-uploads) y los [límites de Drive](https://developers.google.com/workspace/drive/api/guides/limits). No se contrata almacenamiento adicional desde la aplicación; si falta espacio se informa y se ofrece exportación local.
+El selector de guardado permite tocar un archivo existente y reemplazarlo. Si se hace en Drive, el archivo **conserva su nombre anterior** con el contenido nuevo, y la copia anterior deja de estar disponible salvo en el historial de versiones de Drive. Ocurrió en el ensayo de [22](22_Validacion_Release_Drive.md). El nombre nunca determina identidad (la vista previa usa el manifiesto), pero la instrucción para la usuaria es: **guardar siempre con el nombre nuevo que propone la app y no tocar archivos existentes**.
 
 ### Estados comprensibles
 
-«Sin conectar», «Preparando copia», «Subiendo», «Verificando», «Última copia en Drive: fecha/hora», «Sin conexión», «No se pudo guardar la copia» y «Se necesita permiso de nuevo». Mostrar cuenta y fecha de captura además de fecha de verificación cuando difieran.
-
-Cancelar o fallar mantiene la última copia verificada. Desconectar revoca acceso/limpia estado de cuenta de la app; no elimina automáticamente archivos remotos. Cambiar de cuenta obliga a volver a listar su espacio; no migrar copias entre cuentas de forma implícita.
+Los de [19](19_Respaldo_Archivo.md): «Preparando la copia…», «Guardando…», «Comprobando…», «Copia guardada y comprobada», errores de escritura, de relectura y de verificación. Cancelar o fallar mantiene la última copia verificada. Mensajes específicos para la nube son una mejora pendiente (ver [22](22_Validacion_Release_Drive.md)).
 
 ## Política de retención y hábito
 
-La recomendación operativa V1 es pulsar «Guardar copia» al terminar cada jornada con movimientos y antes de cambiar de teléfono. No se promete backup diario automático. El aviso discreto de cambios sin respaldar no bloquea ventas.
+La recomendación operativa V1 es pulsar «Guardar copia en archivo» al terminar cada jornada con movimientos y antes de cambiar de teléfono, eligiendo la carpeta privada de Drive, y de vez en cuando guardar otra copia fuera de Drive (por ejemplo, en el computador). No se promete backup diario automático. El aviso discreto de cambios sin respaldar no bloquea ventas.
 
-Mantener **las siete últimas capturas regulares verificadas por libreta** en cada destino administrado por la app. Siete copias no equivalen a siete días: varias pueden haberse hecho el mismo día. Crear y verificar primero; solo después retirar el excedente más antiguo. Ordenar por captura con desempate por backup_id, mostrando fechas anómalas en caso de reloj incorrecto.
+**V1 no tiene retención automática.** La app no borra ni rota archivos exportados en destinos elegidos por la usuaria (incluido Drive); cada copia es un archivo nuevo. La usuaria puede borrar copias antiguas a mano, conservando siempre varias recientes. La retención de siete copias administradas queda fuera de V1 junto con la integración directa.
 
-La limpieza usa solo archivos reconocidos de esa aplicación/libreta. En Drive, el borrado en appDataFolder es permanente, por lo que debe validarse pertenencia, elegibilidad y existencia de siete capturas válidas más recientes. Si verificar/listar/borrar falla, conservar copias extra; el fallo de limpieza no invalida una nueva copia ya verificada. No contar temporales o archivos corruptos como copias válidas.
+Las copias privadas de recuperación anteriores a una restauración viven en el teléfono, no rotan y no cuentan como protección externa (ver [20](20_Restauracion_Archivo.md)).
 
-La app puede gestionar siete copias privadas locales, pero no borrar automáticamente archivos exportados a destinos elegidos por la usuaria. Mantener por separado la última copia de recuperación previa a una restauración; no participa en la rotación regular. Al crear otra, verificar la nueva antes de sustituir esa protección. Al menos una exportación independiente antes de cambio de dispositivo reduce dependencia de Drive.
-
-Siete copias ayudan frente a errores recientes, pero no garantizan recuperar un error descubierto meses después. Una copia con datos equivocados puede ser estructuralmente válida. Antes de reemplazar una libreta con datos por una vacía, advertirlo expresamente; no tratar cero clientes como corrupción automática.
+Varias copias ayudan frente a errores recientes, pero no garantizan recuperar un error descubierto meses después. Una copia con datos equivocados puede ser estructuralmente válida. Antes de reemplazar una libreta con datos por una vacía, la app lo advierte expresamente; no trata cero clientes como corrupción automática.
 
 ## Restauración segura
 
-1. Elegir archivo o copia Drive. Descargar/copiar a almacenamiento temporal privado. No cambiar la BD operativa.
+1. Elegir el archivo con el selector (carpeta local, Drive u otro proveedor). Copiarlo a almacenamiento temporal privado. No cambiar la BD operativa.
 2. Validar límites, contenedor, formatos soportados, checksum, UTF-8, claves y tipos.
 3. Validar IDs únicos, relaciones, tipos, moneda, fechas, valores, órdenes, siguiente orden y cadena de revisiones. El id/revisión de libreta debe coincidir entre manifiesto y datos.
 4. Construir una BD temporal con el esquema actual. Importar datos, ejecutar comprobaciones de integridad/FK y recalcular todas las secuencias y saldos. Esta BD no se convierte en la operativa.
@@ -141,7 +130,7 @@ Siete copias ayudan frente a errores recientes, pero no garantizan recuperar un 
 7. Si existen datos, crear y verificar un backup de recuperación local del estado actual bajo esa exclusión. Si falla por espacio u otro error, abortar. Una instalación vacía no necesita esa copia previa.
 8. En una única transacción de la BD operativa, quitar registros en orden de dependencias e insertar clientes, movimientos, revisiones y metadatos validados. Registrar identificador/hora de restauración, nueva época local y localizador de la copia previa en metadata local. El backup histórico de otra época no marca estos datos como recién respaldados, aunque coincida el contador de revisión. No intercambiar archivos `.db` abiertos ni manipular manualmente el WAL.
 9. Si falla antes del commit, rollback conserva la libreta anterior. Si el proceso termina después del commit, al reiniciar se reconoce la restauración completada por su marcador y se muestra el nuevo estado íntegro.
-10. Liberar bloqueo, recargar observadores y mostrar resultado con saldos. Borrar temporales conocidos; conservar la copia de recuperación. La restauración no sube ni borra copias en Drive automáticamente.
+10. Liberar bloqueo, recargar observadores y mostrar resultado con saldos. Borrar temporales conocidos; conservar la copia de recuperación. La restauración no modifica ni borra el archivo elegido.
 
 Todos los accesos de escritura pasan por el repositorio y respetan esta exclusión. El backup de recuperación y el marcador pertenecen a la instalación, no se importan como pruebas de éxito desde el archivo externo.
 
@@ -151,16 +140,16 @@ Implementación de iteración 09: cada protección previa tiene nombre privado �
 
 ## Recuperación ante pérdida del teléfono
 
-1. Instalar una release compatible de Paga Ya! con la misma identidad de aplicación para Drive.
+1. Instalar el APK oficial de Paga Ya! (la copia no depende de la firma ni de la identidad de la app; la firma importa para poder actualizar).
 2. Abrir «Recuperar cuentas» desde la libreta vacía.
-3. Autorizar la misma cuenta Google y elegir una copia válida, o seleccionar un archivo exportado conservado fuera del teléfono.
+3. Respaldo → «Restaurar desde archivo»; en el selector elegir Drive con la misma cuenta Google y la copia más reciente, o un archivo conservado fuera del teléfono. Hace falta Internet para abrir una copia de Drive que no está en este teléfono.
 4. Revisar fecha y conteos, restaurar y comprobar dos o tres cuentas conocidas.
 5. Empezar a operar solo en el nuevo teléfono. Si aparece el anterior, no seguir registrando en ambos.
 
-La recuperación cubre hasta la última captura verificada, no movimientos posteriores. Sin copia externa accesible, la app no puede garantizar recuperar un dispositivo perdido. Una copia privada guardada únicamente en ese mismo teléfono no cubre ese escenario. En la entrega debe hacerse un ensayo real de recuperación en otra instalación de prueba.
+La recuperación cubre hasta la última captura verificada, no movimientos posteriores. Sin copia externa accesible, la app no puede garantizar recuperar un dispositivo perdido. Una copia privada guardada únicamente en ese mismo teléfono no cubre ese escenario. El ensayo con Drive en otra instalación aislada está en [22](22_Validacion_Release_Drive.md); falta repetirlo en el teléfono final.
 
 ## Privacidad y evolución
 
 El archivo exportado contiene nombres, teléfonos y movimientos legibles. Indicarlo en el flujo de exportación y recomendar guardarlo en una ubicación privada. No usar una clave de cifrado ligada exclusivamente al teléfono: haría irrecuperable un backup tras perderlo. Cifrado portable con contraseña requiere diseño de recuperación y queda como decisión futura.
 
-V1.1 podrá ejecutar el mismo servicio con WorkManager, red disponible, revisión pendiente y política de reintento. La automatización necesitará tratar permisos revocados, batería y restricciones de segundo plano; no es sincronización y no garantiza ejecución a una hora exacta. No agregar WorkManager solo para reservar esta posibilidad.
+Fuera de V1: integración directa con Drive, respaldo automático y retención automática. Una versión futura podrá ejecutar el mismo servicio con WorkManager, red disponible, revisión pendiente y política de reintento. La automatización necesitará tratar permisos revocados, batería y restricciones de segundo plano; no es sincronización y no garantiza ejecución a una hora exacta. No agregar WorkManager solo para reservar esta posibilidad.

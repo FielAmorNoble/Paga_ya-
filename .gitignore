@@ -34,3 +34,6 @@ backups/
 *.tmp
 Thumbs.db
 .DS_Store
+
+# Entregas locales verificadas (se adjuntan a GitHub Releases, no al historial Git)
+artifacts/releases/

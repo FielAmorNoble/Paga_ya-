@@ -6,8 +6,8 @@ Este documento contiene posibilidades, no compromisos. La numeración orienta co
 
 | Versión | Enfoque | Posibles entregables | Condición para abordarla |
 | --- | --- | --- | --- |
-| V1 | Libreta fiable por cliente | Clientes, fiados/abonos/pago completo, saldo, historial, correcciones, SQLite, backup local y Drive manual, restauración | Alcance obligatorio descrito en documentos 00–07 |
-| V1.1 | Reducir el esfuerzo de proteger datos | Backup Drive automático, recuperación más guiada, mejoras observadas de UX | Restauración manual probada y evidencia de olvidos de respaldo |
+| V1 | Libreta fiable por cliente | Clientes, fiados/abonos/pago completo, saldo, historial, correcciones, SQLite, backup local y Drive manual mediante el selector Android, restauración | Alcance obligatorio descrito en documentos 00–07 |
+| V1.1 | Reducir el esfuerzo de proteger datos | Integración directa con Drive, backup Drive automático, retención automática, recuperación más guiada, mejoras observadas de UX | Restauración manual probada y evidencia de olvidos de respaldo |
 | V1.2 | Consultar o sacar información con más comodidad | Exportar CSV/Excel, filtros de fechas/tipo y resumen mensual sencillo | Preguntas recurrentes que el historial no resuelva |
 | V2 | Apoyar más operaciones del negocio | Productos, ventas y controles adicionales seleccionados | Descubrimiento específico que justifique superar la libreta de cuentas |
 
@@ -15,7 +15,9 @@ Este documento contiene posibilidades, no compromisos. La numeración orienta co
 
 | ID | Idea | Beneficio esperado | Dependencias / precaución |
 | --- | --- | --- | --- |
-| BF-01 | Copia automática Drive | Menos dependencia del hábito diario | WorkManager, permisos, batería, red, deduplicación y retención; no garantizar hora exacta |
+| BF-01 | Copia automática Drive | Menos dependencia del hábito diario | Requiere integración directa (OAuth, Google Cloud, firma registrada), WorkManager, permisos, batería, red, deduplicación y retención; no garantizar hora exacta. Fuera de V1 por decisión del 2026-10-17 |
+| BF-01b | Retención automática de copias | Menos copias acumuladas | La app no puede borrar con seguridad archivos elegidos en el selector; requiere destino administrado. Fuera de V1 |
+| BF-01c | Mensajes específicos para destinos en la nube | Evitar que «comprobada» se entienda como «subida» | Textos generales implementados en rc.3: subida pendiente y nombre nuevo; sin detección del proveedor ni integración directa. Revisar comprensión durante el piloto |
 | BF-02 | Restauración guiada | Menos dudas al cambiar de teléfono | Identificación de cuenta y vista previa ya fiables; no inventar fusión |
 | BF-03 | UX basada en piloto | Menos toques/errores | Medir acciones reales; errores financieros se corrigen en V1, no se posponen |
 | BF-04 | CSV/Excel | Llevar información fuera de la app | Definir columnas, moneda y privacidad; un reporte no sustituye el backup con revisiones |

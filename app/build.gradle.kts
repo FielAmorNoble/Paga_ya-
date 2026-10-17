@@ -5,8 +5,15 @@ plugins {
     alias(libs.plugins.room)
 }
 
+// Solo rutas: nunca poner contraseñas en argumentos, propiedades versionadas o logs.
+val releaseStorePath = providers.environmentVariable("PAGAYA_RELEASE_STORE_FILE").orNull
+val releasePasswordPath = providers.environmentVariable("PAGAYA_RELEASE_PASSWORD_FILE").orNull
+require((releaseStorePath == null) == (releasePasswordPath == null)) {
+    "La firma requiere PAGAYA_RELEASE_STORE_FILE y PAGAYA_RELEASE_PASSWORD_FILE."
+}
+
 android {
-    // Identificador PROVISIONAL de desarrollo (VP-05). No registrar en Google ni distribuir con él.
+    // Namespace interno conservado para no renombrar código ni esquemas Room.
     namespace = "com.example.pagaya"
     // Compose 1.12 (BOM 2026.09.00) exige compilar contra API 37; no cambia minSdk ni targetSdk.
     compileSdk = 37
@@ -16,10 +23,28 @@ android {
         // Mínimo provisional: falta verificar el teléfono real (VP-01).
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        // 1 y 2: candidatos locales; 3: primera entrega preliminar descargable.
+        versionCode = 3
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (releaseStorePath != null && releasePasswordPath != null) {
+            create("officialRelease") {
+                storeFile = file(releaseStorePath)
+                require(storeFile!!.isFile) { "No existe el almacén de firma indicado." }
+                val passwordFile = file(releasePasswordPath)
+                require(passwordFile.isFile) { "No existe el archivo local de contraseña." }
+                val password = passwordFile.readText(Charsets.UTF_8).trimEnd('\r', '\n')
+                require(password.isNotEmpty()) { "El archivo de contraseña está vacío." }
+                storeType = "JKS"
+                storePassword = password
+                keyAlias = "pagaya-release"
+                keyPassword = password
+            }
+        }
     }
 
     buildTypes {
@@ -28,6 +53,7 @@ android {
         // se instalan contra esta variante.
         debug {
             applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
         }
         // Instalación aislada de verificación manual con datos sintéticos: copia de debug con otro
         // applicationId, así que nunca comparte datos con «Paga Ya! Dev». Nombre «Paga Ya! QA» en src/qa/res.
@@ -43,9 +69,13 @@ android {
             applicationIdSuffix = ".qa.restore"
             matchingFallbacks += listOf("qa", "debug")
         }
-        // Aplicación normal, sin sufijo. Sin firma de distribución configurada (VP-05).
+        // Sin credenciales locales se puede compilar unsigned; nunca usar firma debug como sustituto.
         release {
             isMinifyEnabled = false
+            versionNameSuffix = "-rc.3"
+            if (releaseStorePath != null) {
+                signingConfig = signingConfigs.getByName("officialRelease")
+            }
         }
     }
 
@@ -59,6 +89,13 @@ android {
 
     buildFeatures {
         compose = true
+    }
+}
+
+// Cambiar solo release preserva los paquetes instalados de Dev/QA y sus datos.
+androidComponents {
+    onVariants(selector().withBuildType("release")) {
+        it.applicationId.set("com.fielamornoble.pagaya")
     }
 }
 

@@ -16,7 +16,7 @@ Al abrir una cuenta se entiende cuánto debe el cliente. Registrar un fiado aume
 
 Clientes con nombre, teléfono y nota; búsqueda por nombre; cuenta individual; fiados/compras a crédito; abonos; pago completo; historial y saldo derivado; edición con trazabilidad; anulación controlada; SQLite local; exportación e importación de respaldo; respaldo y recuperación manuales con Google Drive; fecha de última copia verificada.
 
-Drive manual forma parte de la entrega V1. Una versión intermedia con archivo local servirá para pruebas, pero no se declarará V1 terminada si falta Drive, salvo cambio de alcance expresamente acordado. Drive no será requisito para abrir la aplicación ni registrar operaciones.
+Drive manual forma parte de la entrega V1 **mediante el selector de archivos de Android** (decisión del propietario del 2026-10-17, [21](21_Firma_Distribucion.md)): la usuaria guarda y abre la copia en una carpeta privada de su Drive, y la cuenta y la subida las gestiona la app Drive. Sin OAuth propio, Google Cloud, cuenta de servicio ni appDataFolder. Integración directa con la API, respaldo automático y retención automática quedan fuera de V1. Drive no será requisito para abrir la aplicación ni registrar operaciones. Validación con APK firmado en [22](22_Validacion_Release_Drive.md).
 
 ## Fuera de V1
 

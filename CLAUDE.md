@@ -2,7 +2,7 @@
 
 ## Producto
 
-Libreta digital de cuentas por cliente (fiados, abonos, pagos) para un pequeño negocio familiar en Colombia. Android, offline, un solo teléfono, COP enteros, saldo derivado de movimientos. Drive manual para respaldo forma parte de V1.
+Libreta digital de cuentas por cliente (fiados, abonos, pagos) para un pequeño negocio familiar en Colombia. Android, offline, un solo teléfono, COP enteros, saldo derivado de movimientos. Respaldo manual mediante el selector Android (incluido Drive como proveedor) forma parte de V1; sin OAuth propio ni appDataFolder. Decisión actual en docs/21, que sustituye el plan previo de integración directa.
 
 Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, backend propio, autenticación obligatoria. Ver `docs/00_Vision_Proyecto.md`.
 
@@ -27,6 +27,9 @@ Fuera de alcance: inventario, facturación, usuarios/roles, sincronización, bac
 
 Si un documento contradice a otro o al código, señalarlo antes de cambiar una decisión de producto.
 
+- Firma, identidad oficial y distribución: `docs/21_Firma_Distribucion.md`.
+- Validación del APK firmado, actualización, Drive mediante el selector, guía sencilla y pendientes antes de publicar: `docs/22_Validacion_Release_Drive.md`.
+
 ## Convenciones
 
 - Kotlin + Jetpack Compose + Room/SQLite, un único módulo `app`, Gradle Kotlin DSL, versiones fijadas en `gradle/libs.versions.toml`. Sin versiones dinámicas.
@@ -35,7 +38,7 @@ Si un documento contradice a otro o al código, señalarlo antes de cambiar una 
 - Textos de UI en español en `res/values/strings.xml`; código en inglés.
 - Sin Hilt/Koin/Retrofit/WorkManager/Firebase salvo decisión documentada. Inyección por constructor.
 - No crear carpetas, interfaces o clases vacías para anticipar la arquitectura.
-- `com.example.pagaya` es un identificador provisional de desarrollo: no registrarlo en Google ni distribuir con él.
+- Release usa `com.fielamornoble.pagaya`; namespace y variantes Dev/QA conservan `com.example.pagaya`. No cambiar los paquetes de pruebas instalados. Firma privada externa; nunca usar configuration cache ni build scans con credenciales cargadas.
 - Nunca incluir datos reales, respaldos, tokens, keystores ni `local.properties` en el repositorio. Fixtures solo sintéticos.
 
 ## Comandos verificados (Windows)
@@ -46,7 +49,7 @@ Requiere JDK 17+ en `PATH` o `JAVA_HOME`, y `local.properties` con `sdk.dir` (no
 .\gradlew.bat assembleDebug     # app de desarrollo com.example.pagaya.dev («Paga Ya! Dev»)
 .\gradlew.bat assembleQa        # app aislada com.example.pagaya.qa («Paga Ya! QA») para verificaciones manuales con datos sintéticos
 .\gradlew.bat assembleQaRestore # segunda app aislada com.example.pagaya.qa.restore («Paga Ya! QA Restauración»)
-.\gradlew.bat assembleRelease   # app normal com.example.pagaya, sin firma de distribución
+.\gradlew.bat assembleRelease   # app oficial com.fielamornoble.pagaya, unsigned sin credenciales; ver docs/21
 .\gradlew.bat lintDebug         # informe en app/build/reports/lint-results-debug.html
 .\gradlew.bat testDebugUnitTest # pruebas JVM (reglas de dominio)
 .\gradlew.bat assembleDebugAndroidTest   # compila las pruebas instrumentadas

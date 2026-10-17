@@ -297,7 +297,7 @@
     <string name="backup_writing">Guardando la copia en el archivo elegido…</string>
     <string name="backup_verifying">Comprobando la copia guardada…</string>
     <string name="backup_saved">Copia guardada y comprobada</string>
-    <string name="backup_saved_detail">El archivo se volvió a leer y está completo.</string>
+    <string name="backup_saved_detail">El archivo se volvió a leer y está completo. Si elegiste Drive u otra nube, la subida puede estar pendiente. Comprueba desde otro dispositivo que la copia esté disponible.</string>
     <string name="backup_ok">Entendido</string>
     <string name="backup_retry_other_place">Elegir otra ubicación</string>
     <string name="backup_failed_kept">Tus cuentas no cambiaron y la última copia comprobada se conserva.</string>
@@ -310,7 +310,7 @@
     <string name="backup_error_interrupted">La copia anterior no terminó de guardarse. Vuelve a intentarlo.</string>
     <string name="backup_privacy">Esta copia contiene los nombres, teléfonos y cuentas de tus clientes. Guárdala en un lugar privado y no la compartas.</string>
     <string name="backup_outside_phone">Una copia guardada solo en este teléfono no te protege si lo pierdes o se daña. Guarda también una copia fuera de él, por ejemplo en tu computador o en una memoria.</string>
-    <string name="backup_cloud_note">Guardar en una carpeta de este teléfono funciona sin Internet. Si eliges una carpeta en la nube, puede necesitar conexión.</string>
+    <string name="backup_cloud_note">Guarda con el nombre nuevo: seleccionar una copia anterior puede reemplazarla. Guardar en este teléfono funciona sin Internet. Drive u otra nube puede dejar la subida pendiente hasta tener conexión.</string>
     <!-- Restauración manual -->
     <string name="restore_from_file">Restaurar desde archivo</string>
     <string name="restore_previous">Recuperar datos anteriores</string>

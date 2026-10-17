@@ -125,19 +125,18 @@ Anular se ubica en el detalle, fuera de acciones principales. Confirmación: «A
 ```text
 < Clientes                    Respaldo
 
-Última copia en Drive
-5 oct, 9:30 p. m.
-Cuenta: correo de la usuaria
+Última copia guardada en archivo
+17 oct, 9:30 p. m.
 Hay cambios sin respaldar
 
-[ Guardar copia en Google Drive ]
-[ Guardar copia en archivo      ]
-[ Recuperar cuentas             ]
+[ Guardar copia en archivo ]    → selector: carpeta local o Drive
+[ Restaurar desde archivo  ]    → selector: carpeta local o Drive
+[ Recuperar datos anteriores ]  (solo tras una restauración)
 ```
 
-Sin Drive conectado, mostrar «Conectar Google Drive». Explicar una vez que allí se guardarán copias autorizadas y que la app funciona sin conexión. En exportación: «Esta copia contiene las cuentas de tus clientes. Guárdala en un lugar privado». No prometer protección ante pérdida del teléfono por una copia que solo quedó en su almacenamiento interno.
+Actualizado 2026-10-17: no hay botón ni conexión propia de Drive; Drive aparece en el selector (☰ → Drive → cuenta → carpeta). La pantalla avisa que una carpeta en la nube puede necesitar conexión. Guardar siempre con el nombre nuevo propuesto, sin tocar archivos existentes ([05](05_Estrategia_Offline_Backup.md)). La app funciona sin conexión. En exportación: «Esta copia contiene las cuentas de tus clientes. Guárdala en un lugar privado». No prometer protección ante pérdida del teléfono por una copia que solo quedó en su almacenamiento interno.
 
-Recuperar cuentas: elegir origen → elegir copia → validar → vista previa → confirmar reemplazo → progreso → resultado. La primera apertura vacía también ofrece «Recuperar cuentas». Nunca pedir crear clientes primero para acceder a restauración.
+Restaurar: selector (local o Drive) → elegir archivo → validar → vista previa → confirmar reemplazo → progreso → resultado. La primera apertura vacía también ofrece «Recuperar cuentas». Nunca pedir crear clientes primero para acceder a restauración.
 
 ## Estados y mensajes
 

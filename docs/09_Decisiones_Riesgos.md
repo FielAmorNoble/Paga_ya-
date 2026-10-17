@@ -14,7 +14,7 @@ Se usa un registro único de decisiones para evitar diez archivos ADR diminutos.
 | DT-04 | Saldo derivado | Una única fórmula reproducible desde movimientos vigentes; se evita saldo manual/caché persistente que pueda divergir. |
 | DT-05 | Corrección con revisión y anulación lógica | Conservar valores anteriores e intención del cambio; más que dos timestamps, menos que un sistema completo de eventos. |
 | DT-06 | Backup lógico JSON + manifiesto dentro de ZIP | Portabilidad e integridad sobre bytes definidos; se evita copiar `.db` abierto y mantener dos formatos en V1. |
-| DT-07 | Drive manual en V1, appDataFolder | Copia externa sencilla y permiso acotado; espacio oculto exige recuperación desde app y exportación independiente. |
+| DT-07 | Drive manual en V1 **mediante el selector Android** (revisada 2026-10-17; antes appDataFolder) | Sin OAuth, Google Cloud ni dependencias; el archivo queda visible en Mi unidad y se recupera desde cualquier dispositivo. Costos: la usuaria elige carpeta, la app no confirma la subida (relectura puede venir de la caché del proveedor) ni retiene copias. Integración directa, automatización y retención automática fuera de V1. Evidencia: [22](22_Validacion_Release_Drive.md). |
 | DT-08 | Restauración completa validada y transaccional | Evitar duplicados y mezclas; preview y copia previa cubren errores humanos. No hay fusión ni sincronización. |
 | DT-09 | Un módulo y paquetes por responsabilidad | Proyecto mantenible por una persona; evita módulos, interfaces y herramientas sin beneficio inmediato. |
 | DT-10 | MVVM pequeño + repositorio + reglas puras | La UI no escribe SQL ni define otra fórmula; transacciones y transporte permanecen comprobables. |
@@ -34,8 +34,8 @@ Detalles y referencias: [arquitectura](04_Arquitectura.md), [modelo](03_Modelo_D
 | VP-02 | Experiencia del mantenedor | No hay preferencia tecnológica declarada | Desarrollador, antes de crear proyecto |
 | VP-03 | Importe máximo y significado de ventas de contado | Máximo preventivo por movimiento y contado fuera de libreta | Usuaria, fase 0 |
 | VP-04 | Cuenta Google y custodia de acceso | Cuenta de la persona responsable del negocio | Propietario, fase 0/6 |
-| VP-05 | Identidad de paquete y firma | Definitivas antes de registrar OAuth release | Desarrollador/propietario, fase 0 |
-| VP-06 | Requisitos vigentes OAuth/distribución | Verificar con firma y cuenta destinataria, sin prometer exenciones | Desarrollador, fase 0/8 |
+| VP-05 | Identidad de paquete y firma | **Resuelta 2026-10-17:** `com.fielamornoble.pagaya`, clave propia ([21](21_Firma_Distribucion.md)) | Desarrollador/propietario |
+| VP-06 | Requisitos vigentes de distribución | Sin OAuth en V1. Verificar instalación de APK fuera de Play en el teléfono final, sin prometer exenciones | Desarrollador, fase 8 |
 | VP-07 | Exactitud de deuda inicial | Conciliación contra libreta con fecha de corte | Usuaria, fase 8 |
 | VP-08 | Custodia de exportaciones y frecuencia | Copia al cierre de jornada con cambios | Usuaria, piloto y entrega |
 
@@ -47,7 +47,7 @@ Detalles y referencias: [arquitectura](04_Arquitectura.md), [modelo](03_Modelo_D
 | Android | 16 (API 36) |
 | Espacio libre | ≈ 99,7 GB |
 | RAM | Sin informar |
-| Google Play services | Sin informar (necesario para Drive en fase 6) |
+| Google Play services | Sin informar (necesario para que el selector ofrezca Drive) |
 
 - Android 16 cumple el mínimo provisional API 26. No se modifica `minSdk`.
 - La API del teléfono coincide con el `targetSdk` 36 actual.
@@ -70,9 +70,9 @@ Evaluación cualitativa inicial; revisar al terminar cada fase relevante.
 | R-06 | Cierre, disco lleno o migración defectuosa / pérdida de registros | Commit atómico, errores visibles, migración no destructiva y pruebas | Daño físico sigue posible; T-17 a T-20 |
 | R-07 | Archivo truncado o manipulado / restauración dañina | Hash, límites, formato, relaciones, secuencias y BD temporal | Hash no verifica autor; T-24 a T-28 |
 | R-08 | Restaurar copia antigua/equivocada / perder trabajo reciente | Preview, confirmación, copia previa y reemplazo transaccional | Solo recuperar si había copia; T-29 a T-31 |
-| R-09 | Pérdida/robo del teléfono / pérdida total local | Copia externa Drive y exportación independiente; bloqueo del dispositivo | Se pierden cambios desde última captura; T-35 |
-| R-10 | Cuenta Google inaccesible, permisos revocados o identidad app cambiada | Acceso del propietario, firma/proyecto conservados y archivo portable | Drive solo puede recuperarse si existe acceso; T-32 a T-35 |
-| R-11 | Copias equivocadas desplazan una válida | Siete capturas, no sobrescribir, verificar antes de limpiar y copia previa protegida | Error antiguo puede superar retención; T-34 |
+| R-09 | Pérdida/robo del teléfono / pérdida total local | Copia en carpeta privada de Drive (confirmada en Drive web) y exportación independiente; bloqueo del dispositivo | Se pierden cambios desde última captura; T-35 |
+| R-10 | Cuenta Google inaccesible o copia sin subir | Acceso del propietario a la cuenta, comprobar la copia en Drive web, archivo portable fuera de Drive | Drive solo puede recuperarse si existe acceso; T-32 a T-35 |
+| R-11 | Copias equivocadas desplazan una válida | La app propone un nombre nuevo y nunca borra; guía: no sobrescribir archivos existentes (en Drive conserva el nombre antiguo, observado en [22](22_Validacion_Release_Drive.md)); copia previa protegida | Sobrescribir a mano sigue siendo posible; historial de versiones de Drive como último recurso; T-34 |
 | R-12 | Exportación expone datos | Mensaje de privacidad, selector de destino, sin compartir automáticamente | ZIP no cifra; T-37 |
 | R-13 | Backup Android no previsto / subida sin claridad | Configuración explícita de exclusiones y validación de fabricante | No confiar solo en allowBackup; T-37 |
 | R-14 | Dos teléfonos editan / historias divergentes | Política de un dispositivo operativo y restauración por reemplazo | No se pueden fusionar versiones en V1; T-36 |

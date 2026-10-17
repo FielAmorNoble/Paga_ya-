@@ -2,6 +2,8 @@
 
 Iteración 09, 2026-10-17. Checkout local `develop`, base `ca141b3` (iteración 08 confirmada). Cambios sin commit para revisión. No cambia el esquema Room v1, el formato del ZIP, las versiones del stack ni las reglas financieras. HU-09 sigue parcial: Google Drive está pendiente.
 
+**Nota, 2026-10-17 (tarde):** restaurar desde una copia de Drive elegida en el mismo selector `OpenDocument` quedó comprobado en QA Restauración con contenido idéntico (SHA-256 de `data.json`), sin cambios de código. Ver [22](22_Validacion_Release_Drive.md).
+
 ## Flujo implementado
 
 En Respaldo aparece «Restaurar desde archivo», incluso con la libreta vacía. `OpenDocument` abre el selector Android; cancelarlo vuelve sin error. Se lee el URI una vez hacia un archivo privado en `noBackupFilesDir/restauracion_tmp`, con `LimitedInputStream`: máximo real de 25 MiB. No se confía en extensión, nombre, tamaño declarado ni permiso permanente.
@@ -58,7 +60,7 @@ Se usa exactamente `prepareSource` → base temporal → vista previa → `confi
 
 ## Pruebas automáticas ejecutadas
 
-Motorola moto g84 5G, Android 15/API 35, dispositivo `ZT322JX5BF`. Solo bases aleatorias `test-*.db` y directorios `cache/test-restore-*`; ninguna prueba abre la `pagaya.db` de Dev. La suite usa clientes ficticios con Unicode, archivado, fiados, abonos, pago total, anulación y dos correcciones encadenadas.
+Motorola moto g84 5G, Android 15/API 35. Solo bases aleatorias `test-*.db` y directorios `cache/test-restore-*`; ninguna prueba abre la `pagaya.db` de Dev. La suite usa clientes ficticios con Unicode, archivado, fiados, abonos, pago total, anulación y dos correcciones encadenadas.
 
 | Verificación | Resultado |
 | --- | --- |

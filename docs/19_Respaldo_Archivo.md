@@ -4,6 +4,8 @@ Fecha: 2026-10-16. Iteración 08, en `develop`, sobre `90b866b` (iteración 07).
 
 **Nota histórica, 2026-10-17:** la iteración 08 quedó confirmada en `ca141b3`. Las afirmaciones de ausencia de restauración de este documento describen ese cierre. La iteración 09 implementa y prueba restauración desde archivo y recuperación anterior: ver [20](20_Restauracion_Archivo.md). No cambia el contrato ni los límites siguientes; sus mediciones de exportación no son mediciones de restauración. Drive sigue pendiente y HU-09 parcial.
 
+**Nota, 2026-10-17 (tarde):** Drive se usa como destino de este mismo selector, sin integración propia (doc 21). Exportar a una carpeta de Drive con el APK oficial firmado quedó comprobado, incluido sin conexión: Drive acepta el archivo y lo relee desde su caché, así que «Copia guardada y comprobada» no demuestra la subida. Ver [22](22_Validacion_Release_Drive.md). Las referencias de este documento a «Drive pendiente» y a retención de siete copias describen el plan anterior.
+
 **Objetivo:** guardar una copia completa de la libreta en un archivo que la usuaria elige con el selector de Android. La app solo dice «Copia guardada y comprobada» después de volver a leer ese archivo y validarlo.
 
 **No incluye:** restauración, Google Drive, respaldo automático ni retención de copias.

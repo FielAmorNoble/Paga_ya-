@@ -53,13 +53,14 @@ Añadir cliente archivado sin deuda, movimiento anulado, movimiento editado dos 
 | T-29 | Restaurar con datos existentes y fallo en copia previa o commit | Datos anteriores intactos; copia previa requerida para reemplazo | Instrumentada / crítica |
 | T-30 | Terminar proceso antes/después del commit de restauración | Al reabrir, libreta íntegra anterior o nueva; marcador consistente | Instrumentada / crítica |
 | T-31 | Restaurar copia equivocada, recuperar anterior, importar dos veces | Recuperación posible y sin duplicación; no borrar protección antes de crear nueva válida | Integración / crítica |
-| T-32 | Drive: autorizar/cancelar/revocar/cambiar cuenta/token vencido | Operación local disponible; cuenta y estados remotos correctos | Google real + transporte simulado / crítica |
-| T-33 | Drive: offline, timeout tras subida, cuota, 429/5xx y cierre | Sin éxito falso, reintento acotado, mismo backup lógico y descarga verificada | Transporte + Google real / crítica |
-| T-34 | Crear octava copia, copia corrupta, listado paginado, fallo al borrar y otro libreta_id | Conservar siete verificadas; no borrar ajenas ni contar corruptas; excedentes seguros si falla limpieza | Integración / crítica |
-| T-35 | Instalar release en entorno vacío y recuperar archivo/Drive | Mismos clientes, historia, revisiones y saldos con cuenta/identidad correctas | Dos instalaciones / crítica |
+| T-32 | Drive en el selector: guardar en carpeta privada, cancelar, confirmar en Drive web u otro dispositivo | Operación local disponible; éxito solo tras relectura; archivo visible en Drive | APK firmado + Google real / crítica. **Comprobado 2026-10-17** ([22](22_Validacion_Release_Drive.md)) |
+| T-33 | Drive sin conexión al guardar y al abrir | No prometer subida; distinguir «comprobada» de «subida»; restaurar sin red puede fallar sin cambiar datos | Dispositivo + Google real / crítica. **Observado 2026-10-17:** Drive aceptó y reabrió desde caché; subida al reconectar ([22](22_Validacion_Release_Drive.md)) |
+| T-34 | ~~Retención de siete copias~~ Fuera de V1. En su lugar: la app nunca borra ni sobrescribe por sí misma un archivo exportado; propone nombre nuevo | Archivos previos intactos salvo acción explícita de la usuaria en el selector | Dispositivo / alta |
+| T-35 | Instalar release en entorno vacío y recuperar archivo/Drive | Mismos clientes, historia, revisiones y saldos | Dos instalaciones / crítica. Drive → QA Restauración **comprobado** 2026-10-17 con SHA-256 igual; teléfono final pendiente |
 | T-36 | Datos cambian tras snapshot/vista previa; restaurar y alcanzar un número de revisión que ya tuvo otra historia | Aviso de cambios pendientes; comparar época y revisión, no solo número; preview vigente y exclusión al aplicar | Integración / crítica |
 | T-37 | Inspeccionar permisos, logs, backup sistema, ZIP y árbol Git | Sin secretos/datos reales; exportación legible declarada; exclusiones de plataforma probadas | Revisión + dispositivo / crítica |
 | T-38 | Libreta totalmente vacía, solo archivados/anulados o 0 bytes | Vacía válida con advertencia según contexto; archivo vacío rechazado | Integración + UI / alta |
+| T-39 | Actualizar APK firmado con versionCode superior sobre instalación con datos | Mismos clientes, movimientos, revisiones y saldos; firstInstallTime conservado | Dispositivo / crítica. **Comprobado** rc.1 → rc.2 ([22](22_Validacion_Release_Drive.md)) |
 
 ## Invariantes útiles para pruebas generativas
 

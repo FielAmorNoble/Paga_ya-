@@ -2,7 +2,7 @@
 
 ## Decisión propuesta
 
-Aplicación Android instalada, escrita en **Kotlin**, con **Jetpack Compose**, **ViewModel/StateFlow**, **Room sobre SQLite** y corrutinas. Un único módulo `app`, construcción con Gradle Kotlin DSL y dependencias fijadas. Exportación con el selector de documentos de Android; Drive mediante autorización de Google y API v3. No hay backend propio.
+Aplicación Android instalada, escrita en **Kotlin**, con **Jetpack Compose**, **ViewModel/StateFlow**, **Room sobre SQLite** y corrutinas. Un único módulo `app`, construcción con Gradle Kotlin DSL y dependencias fijadas. Exportación y restauración con el selector de documentos de Android, que también ofrece Google Drive como destino (decisión 2026-10-17, [21](21_Firma_Distribucion.md)). Sin autorización de Google, API de Drive ni backend propio.
 
 La elección asume un teléfono Android y un mantenedor sin un stack previo indicado. El factor decisivo es reducir las adaptaciones entre persistencia, ciclo de vida, archivos y autorización en el único sistema operativo requerido. No se afirma que Kotlin sea siempre más fácil que Flutter ni que Compose sea más rápido sin medirlo.
 
@@ -37,11 +37,11 @@ flowchart TD
     B --> R
     B --> F[Archivo lógico validado]
     F --> SAF[Selector de archivos Android]
-    F --> D[Adaptador Google Drive]
-    D --> G[appDataFolder]
+    SAF --> L[Carpeta local]
+    SAF --> D[Proveedor Google Drive del sistema]
 ```
 
-SQLite es la autoridad de negocio. La UI observa sus resultados; Drive solo transporta instantáneas y no participa al guardar un abono.
+SQLite es la autoridad de negocio. La UI observa sus resultados; Drive solo almacena archivos de respaldo y no participa al guardar un abono.
 
 ## Patrón de arquitectura
 
@@ -53,9 +53,9 @@ Arquitectura por capas pequeña, con presentación MVVM y flujo unidireccional: 
 - **Repositorio:** único punto de escritura de cuentas, transacciones, validación final, control de versión e idempotencia.
 - **Room/DAO:** persistencia y consultas parametrizadas; saldos agregados, no sincronización.
 - **BackupService / RestoreService:** captura/exportación y restauración con un único formato/validador; staging Room y reemplazo transaccional. Reutilizan las mismas reglas de negocio.
-- **DriveGateway:** autorización/transporte/retención, sin decisiones financieras.
+- **DocumentAccess / ContentResolverDocuments:** escritura y relectura del documento elegido en el selector, sea local o de Drive. No hay `DriveGateway` en V1.
 
-Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Koin inicialmente. Interfaces donde exista un límite que se pruebe o sustituya, como repositorio o Drive; evitar duplicar cada entidad en tres modelos idénticos. Estas decisiones adaptan las [recomendaciones de arquitectura Android](https://developer.android.com/topic/architecture/recommendations) al tamaño del proyecto.
+Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Koin inicialmente. Interfaces donde exista un límite que se pruebe o sustituya, como repositorio o acceso a documentos; evitar duplicar cada entidad en tres modelos idénticos. Estas decisiones adaptan las [recomendaciones de arquitectura Android](https://developer.android.com/topic/architecture/recommendations) al tamaño del proyecto.
 
 ## Stack y límites de dependencias
 
@@ -68,8 +68,7 @@ Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Ko
 | Persistencia | Room + SQLite del dispositivo inicialmente | SQL controlado y migraciones probables con herramientas oficiales |
 | JSON | `StrictJsonReader` y escritor mínimo propios para respaldo; `SnapshotJson` para revisiones | UTF-8 estricto, límites por campo, rechazo de claves duplicadas y profundidad limitada; sin dependencia ni plugin nuevos |
 | Integridad/archivo | SHA-256 y ZIP del runtime Java/Android | Sin librería criptográfica o compresor adicionales |
-| Drive | Google Identity Services AuthorizationClient + API REST v3 | Acceso limitado solo al respaldo, sin servidor |
-| HTTP | Un único cliente mantenido, preferentemente OkHttp | Cancelación, timeouts y subida; justificar/fijar versión en fase 0 |
+| Drive | Ninguna dependencia: proveedor de documentos del sistema mediante el selector | Sin OAuth, Google Cloud ni cliente HTTP (decisión 2026-10-17) |
 | Pruebas | JUnit, pruebas Room y Compose instrumentadas | Cubrir reglas, transacciones y recorridos críticos |
 
 No se fijan versiones numéricas basadas en memoria. En fase 0 seleccionar versiones estables compatibles de Android Studio/JDK/AGP/Gradle/Kotlin/Compose/Room/KSP, registrar catálogo y wrapper, y construir una prueba mínima. Propuesta de compatibilidad: Android 8/API 26 en adelante, sujeta al teléfono y a los mínimos de esas versiones; no elevar el mínimo silenciosamente. `compileSdk` y `targetSdk` se fijan según soporte y requisitos vigentes de distribución.
@@ -115,14 +114,14 @@ Paga_ya/
         │   │   ├── data/
         │   │   │   ├── local/    # Room, DAO, entidades, migraciones
         │   │   │   ├── repository/
-        │   │   │   └── backup/   # formato, exportación, importación, Drive
+        │   │   │   └── backup/   # formato, exportación, importación
         │   │   └── platform/     # reloj, documentos, autorización, contenedor
         │   └── res/              # strings y reglas de respaldo del sistema
         ├── test/                 # reglas y fixtures sintéticos
         └── androidTest/          # Room, migraciones, UI y recuperación
 ```
 
-El identificador de paquete se elegirá con el propietario antes de registrar OAuth y firmar una release; no usar un dominio ajeno. Cambiarlo después puede afectar instalación y acceso a copias. Separar credenciales y datos de prueba de producción.
+Identificador release definitivo `com.fielamornoble.pagaya` y firma propia: ver [21](21_Firma_Distribucion.md). No hay registro OAuth. Cambiar identificador o firma después impide actualizar sobre la instalación existente; las copias en archivo no dependen de ellos. Separar credenciales y datos de prueba de producción.
 
 ## Convenciones técnicas
 

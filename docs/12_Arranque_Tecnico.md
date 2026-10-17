@@ -114,7 +114,7 @@ Sin versiones dinámicas ni prereleases; todas en `gradle/libs.versions.toml`.
 Configuración provisional adicional:
 
 - `applicationId` y `namespace`: `com.example.pagaya`. **Provisional, solo desarrollo** (VP-05). No registrar en Google Cloud ni distribuir con él.
-- `versionName` `0.1.0-dev`, `versionCode` 1. Sin firma de distribución; el APK debug usa la clave debug local.
+- `versionName` `0.1.0-dev`, `versionCode` 1. Sin firma de distribución; el APK debug usa la clave debug local. **Actualizado 2026-10-17:** identidad release `com.fielamornoble.pagaya` con firma propia ([21](21_Firma_Distribucion.md)); `versionName` base `0.1.0`, `versionCode` 2 (release `0.1.0-rc.2`, debug/QA `0.1.0-dev`). Ver [22](22_Validacion_Release_Drive.md).
 - Respaldo del sistema desactivado: `allowBackup="false"`, `fullBackupContent="false"` y `data_extraction_rules.xml` excluye todos los dominios en `cloud-backup` y `device-transfer` (doc 04, R-13). Pendiente comprobarlo en el teléfono (T-37).
 - Icono adaptativo provisional; tema Material 3 claro/oscuro sin color dinámico.
 - Plugin Room con `schemaDirectory("app/schemas")`; esquema versión 1 exportado desde el 2026-10-12.

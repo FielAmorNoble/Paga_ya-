@@ -17,6 +17,7 @@ Las fuentes respaldan capacidades y restricciones. La elección de stack, límit
 | [SQLite WAL](https://sqlite.org/wal.html) | Riesgo de copiar un archivo de base abierto sin su estado asociado |
 | [Selector de documentos Android](https://developer.android.com/training/data-storage/shared/documents-files) | Exportación/importación elegida por la persona |
 | [Respaldo del sistema Android](https://developer.android.com/identity/data/autobackup) | Configuración explícita y diferencias de transferencias según plataforma/fabricante |
+| *Las fuentes de autorización y API de Drive siguientes respaldaban el plan de integración directa, fuera de V1 desde el 2026-10-17 (Drive mediante el selector).* | |
 | [Autorización Android](https://developer.android.com/identity/authorization) | Acceso Google opcional, separado de autenticación de la app |
 | [AuthorizationClient](https://developers.google.com/android/reference/com/google/android/gms/auth/api/identity/AuthorizationClient) | Autorizar, limpiar token y revocar permisos |
 | [Scopes de Drive](https://developers.google.com/workspace/drive/api/guides/api-specific-auth) | Permiso appdata acotado y clasificación de sensibilidad |
@@ -29,7 +30,7 @@ Las fuentes respaldan capacidades y restricciones. La elección de stack, límit
 ## Aspectos aún no demostrados
 
 - Compilación conjunta de versiones concretas del stack: se hace en fase 0/1.
-- Autorización y restauración con la cuenta y firma definitivas: se ensayan en fase 0/6.
+- Restauración desde Drive con la firma definitiva: ensayada mediante el selector el 2026-10-17 ([22](22_Validacion_Release_Drive.md)); falta el teléfono final.
 - Tiempos, memoria, tamaño APK y compatibilidad con el teléfono de la vendedora: requieren medición real.
 - Condiciones exactas de publicación/verificación y costos para el canal final: revisar antes de distribuir.
 - Comprensión de los flujos y cumplimiento de diez segundos: requieren sesión con la usuaria.
