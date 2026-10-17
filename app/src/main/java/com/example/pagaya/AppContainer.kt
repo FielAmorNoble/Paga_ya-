@@ -1,9 +1,14 @@
 package com.example.pagaya
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import com.example.pagaya.data.ClientRepository
 import com.example.pagaya.data.MovementRepository
+import com.example.pagaya.data.backup.BackupService
+import com.example.pagaya.data.backup.ContentResolverDocuments
 import com.example.pagaya.data.local.PagaYaDatabase
+import java.io.File
 import java.time.Clock
 import java.util.UUID
 
@@ -21,4 +26,25 @@ class AppContainer(context: Context) {
     val clientRepository: ClientRepository by lazy { ClientRepository(database, clock) }
 
     val movementRepository: MovementRepository by lazy { MovementRepository(database, clock) }
+
+    /** Temporales del respaldo en almacenamiento privado excluido de cualquier respaldo del sistema. */
+    val backupService: BackupService by lazy {
+        BackupService(
+            db = database,
+            clock = clock,
+            workDir = File(appContext.noBackupFilesDir, BackupService.WORK_DIR),
+            appVersion = appVersion(),
+            documents = ContentResolverDocuments(appContext.contentResolver),
+        )
+    }
+
+    private fun appVersion(): String {
+        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            appContext.packageManager.getPackageInfo(appContext.packageName, PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            appContext.packageManager.getPackageInfo(appContext.packageName, 0)
+        }
+        return info.versionName?.takeIf { it.isNotBlank() } ?: "desconocida"
+    }
 }

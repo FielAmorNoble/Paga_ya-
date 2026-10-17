@@ -2,7 +2,7 @@
 
 Una libreta digital de cuentas por cliente para un pequeño emprendimiento familiar en Colombia.
 
-**Estado: clientes, movimientos, saldo, historial, correcciones y archivo de clientes en desarrollo, 16 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar, editar, archivar y reactivar clientes; registrar fiados, abonos y el pago del saldo completo; ver el saldo y el historial; abrir un movimiento, corregirlo o anularlo conservando lo registrado originalmente, y consultar los cambios. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden reactivar movimientos anulados ni hacer respaldos; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
+**Estado: clientes, movimientos, saldo, historial, correcciones, archivo de clientes y copia en archivo en desarrollo, 16 de octubre de 2026.** La app de desarrollo permite crear, buscar, consultar, editar, archivar y reactivar clientes; registrar fiados, abonos y el pago del saldo completo; ver el saldo y el historial; abrir un movimiento, corregirlo o anularlo conservando lo registrado originalmente, y consultar los cambios; y guardar una copia completa en un archivo elegido, que la app relee y valida antes de confirmarla. Todo se guarda en el teléfono y funciona sin Internet. **Todavía no se pueden recuperar las cuentas desde una copia (restauración), usar Google Drive ni reactivar movimientos anulados; no es una versión para llevar cuentas reales.** Los criterios de prueba son compromisos para el desarrollo, no resultados de pruebas ejecutadas.
 
 | | Estado |
 | --- | --- |
@@ -12,7 +12,8 @@ Una libreta digital de cuentas por cliente para un pequeño emprendimiento famil
 | Base local Room v1: tablas, restricciones, metadata inicial | Implementada; 21 pruebas instrumentadas correctas en un teléfono con Android 15 (API 35); pendiente API 26. Ver [13](docs/13_Persistencia_Local.md) |
 | Movimientos: fiado, abono y pago completo; saldo derivado; historial con saldo por movimiento (HU-01, HU-03, HU-04, HU-05 y HU-07 en su parte de registro y lectura) | Implementado; 71 pruebas instrumentales y 30 JVM correctas; recorrido manual en el teléfono del desarrollador (Android 15). Ver [16](docs/16_Movimientos_Saldo_Historial.md) |
 | Detalle, corrección y anulación de movimientos con revisiones y «Ver cambios» (HU-08; parte de HU-07) | Implementado; 54 pruebas JVM y 123 instrumentadas correctas; recorrido manual en el teléfono del desarrollador (Android 15). No hay reactivación de anulados. Ver [17](docs/17_Correcciones_Movimientos.md) |
-| Exportación, restauración y Google Drive | Planificado (Drive forma parte de V1) |
+| Respaldo en archivo: «Respaldo» en el menú, captura consistente, ZIP con `manifest.json` y `data.json`, validador reutilizable, selector del sistema, relectura y verificación, estado de la última copia y cambios sin respaldar (RF-11, RF-13 para archivo) | Implementado; 88 pruebas JVM y 167 instrumentadas correctas. En el teléfono, en la app aislada «Paga Ya! QA» con datos sintéticos: exportación a Descargas en modo avión verificada (también fuera del teléfono), cambios sin respaldar, cancelación y proceso cerrado con el selector abierto. **Pendiente:** destino en la nube. Ver [19](docs/19_Respaldo_Archivo.md) |
+| Restauración (recuperar cuentas) y Google Drive | Planificado: la restauración es la siguiente iteración; aún no se puede recuperar una copia ni se ha ensayado en otra instalación |
 
 La V1 permitirá registrar fiados, abonos y pagos, consultar cuánto debe cada cliente y recuperar la información desde un respaldo. Funcionará sin Internet; Google Drive se utilizará únicamente para copias autorizadas.
 
@@ -50,6 +51,7 @@ Estas decisiones son la propuesta técnica del proyecto. Sus supuestos, límites
 | [16 — Movimientos, saldo e historial](docs/16_Movimientos_Saldo_Historial.md) | Registro de fiados, abonos y pago completo; reglas, decisiones, pruebas, pendientes y pasos para probar en el teléfono |
 | [17 — Correcciones de movimientos](docs/17_Correcciones_Movimientos.md) | Detalle, corrección y anulación con trazabilidad; integridad, decisiones, pruebas, pendientes y pasos para probar |
 | [18 — Archivo de clientes](docs/18_Archivo_Clientes.md) | Archivar y reactivar clientes, vista «Archivados»; reglas, carreras, pruebas, revisión de HU-02/HU-06 y pasos para probar |
+| [19 — Respaldo en archivo](docs/19_Respaldo_Archivo.md) | Contrato exacto del archivo, arquitectura de captura/validación/exportación, validaciones, pruebas, pendientes y pasos para probar |
 
 Se conservan los nueve documentos solicitados. Se agregan tres anexos para que decisiones, pruebas y fuentes puedan mantenerse sin sobrecargar el plan de implementación. Este índice es el punto de entrada; cada regla tiene un documento responsable.
 
@@ -72,6 +74,7 @@ En PowerShell: `.\gradlew.bat assembleDebug lintDebug`. Para una verificación d
 | Variante | applicationId | Nombre visible | Comando | APK |
 | --- | --- | --- | --- | --- |
 | Desarrollo (debug) | `com.example.pagaya.dev` | Paga Ya! Dev | `assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` |
+| Verificación (qa) | `com.example.pagaya.qa` | Paga Ya! QA | `assembleQa` | `app/build/outputs/apk/qa/app-qa.apk`. Copia de debug para comprobaciones manuales con datos sintéticos; no comparte datos con Dev |
 | Normal (release) | `com.example.pagaya` | Paga Ya! | `assembleRelease` | `app/build/outputs/apk/release/app-release-unsigned.apk` (sin firma de distribución) |
 
 Al tener `applicationId` distintos, cada una usa su propio directorio de datos y su propia `pagaya.db`. Las pruebas instrumentadas se ejecutan **solo contra la variante de desarrollo**:

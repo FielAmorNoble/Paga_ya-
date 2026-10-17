@@ -29,6 +29,14 @@ android {
         debug {
             applicationIdSuffix = ".dev"
         }
+        // Instalación aislada de verificación manual con datos sintéticos: copia de debug con otro
+        // applicationId, así que nunca comparte datos con «Paga Ya! Dev». Nombre «Paga Ya! QA» en src/qa/res.
+        // No tiene pruebas instrumentadas (testBuildType sigue siendo debug).
+        create("qa") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".qa"
+            matchingFallbacks += listOf("debug")
+        }
         // Aplicación normal, sin sufijo. Sin firma de distribución configurada (VP-05).
         release {
             isMinifyEnabled = false

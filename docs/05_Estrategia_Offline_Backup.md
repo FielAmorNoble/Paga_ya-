@@ -54,15 +54,19 @@ No exportar tokens, preferencias de cuenta Google, rutas del teléfono, IDs de i
 
 El checksum se calcula sobre los **bytes exactos sin comprimir de data.json**, antes de empaquetar; el importador calcula sobre esos mismos bytes, no sobre un objeto vuelto a serializar. SHA-256 detecta corrupción accidental, no autentica al autor ni impide modificar archivo y checksum juntos. V1 no añade firma digital ni cifrado propio.
 
-### Límites defensivos propuestos
+### Límites defensivos vigentes del formato 1
 
 - Archivo comprimido: hasta 25 MiB; datos descomprimidos: hasta 50 MiB; manifiesto: hasta 64 KiB.
 - Hasta 100.000 clientes, 100.000 movimientos y 100.000 revisiones; profundidad JSON máxima 20.
 - Solo `manifest.json` y `data.json`, sin nombres repetidos, carpetas, rutas relativas, enlaces ni entradas extra; rechazar ZIP cifrado o métodos no soportados.
 - Procesar con límites de lectura real, no confiar en tamaños declarados del ZIP. No extraer rutas provistas por el archivo al sistema de archivos.
+- Cruzar directorio central, encabezados locales, descriptores y contenido real: nombres, posiciones, métodos, flags, CRC y tamaños comprimidos/descomprimidos deben coincidir; no admitir relleno ni entradas ocultas.
+- Textos de datos limitados **durante la lectura**, en puntos de código Unicode: nombre 120, teléfono 30, nota/descripción 1.000, motivo 300; UUID 36, fecha 10, códigos 16, snapshot canónico 8.192. Este último es una cota defensiva que cubre los escapes del contrato, no una ampliación de los 1.000 caracteres de descripción. Claves JSON hasta 64; textos conocidos del manifiesto con su límite por campo (versión de app 100, SHA 64); textos genéricos de extensiones/versiones desconocidas hasta 1.024.
 - Rechazar un formato futuro desconocido indicando que se necesita una versión compatible. Las migraciones de formato anteriores serán explícitas y probadas cuando existan.
 
-Son límites amplios para el negocio, independientes de la carga objetivo de rendimiento. Comprobar memoria en el teléfono real; serializar y validar por streaming/archivos temporales privados cuando sea necesario, sin cargar todo el ZIP a memoria. Al exceder un límite se conserva la información actual y se solicita soporte; no truncar silenciosamente.
+Son límites del archivo, independientes de la carga objetivo de rendimiento; no garantizan que toda combinación máxima sea sostenible en cualquier teléfono. La captura mantiene entidades Room y la validación mantiene filas parseadas, índices y estados de dominio en memoria, aunque los JSON se lean/escriban por streaming y nunca se cargue todo el ZIP como texto. Ver mediciones, margen de seguridad y máximos no comprobados en [19](19_Respaldo_Archivo.md). Al exceder un límite se conserva la información actual; no truncar silenciosamente ni capturar `OutOfMemoryError` como estrategia.
+
+Antes de cargar listas, `prepare` obtiene conteos y bytes UTF-8 variables en SQLite, **en la misma transacción** que la metadata, captura e inserción del intento. Rechaza filas excesivas o una cota inferior `bytes_texto + 100×clientes + 200×movimientos + 150×revisiones` mayor que 50 MiB. Los términos fijos son menores que las claves, puntuación, UUID y valores mínimos de cada fila; escapar texto solo aumenta su tamaño. No es una predicción de memoria ni del tamaño final: omite metadata, dígitos adicionales y escapes para evitar rechazos falsos de archivos admisibles. El tamaño real sigue comprobándose al validar. Un rechazo previo no crea un nuevo éxito ni modifica cuentas o la copia verificada anterior.
 
 ## Generación y exportación
 

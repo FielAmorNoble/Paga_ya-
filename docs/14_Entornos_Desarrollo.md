@@ -22,15 +22,16 @@ Las dos ramas conservan el código, las pruebas (`app/src/androidTest`), la docu
 
 ## Variantes de la aplicación
 
-Se usan dos build types; no hay product flavors ni módulos adicionales.
+Se usan tres build types; no hay product flavors ni módulos adicionales. `qa` se añadió el 2026-10-16 (iteración 08) para verificar la exportación sin exportar la libreta de Dev.
 
-| | debug (desarrollo) | release (normal) |
-| --- | --- | --- |
-| `applicationId` | `com.example.pagaya.dev` (`applicationIdSuffix = ".dev"`) | `com.example.pagaya` |
-| Nombre visible | «Paga Ya! Dev» (`app/src/debug/res/values/strings.xml`) | «Paga Ya!» |
-| Depurable | Sí | No |
-| Firma | Clave debug local | **Ninguna**: `app-release-unsigned.apk`. Sin firma de distribución (VP-05) |
-| Pruebas instrumentadas | Sí: `testBuildType = "debug"` | No |
+| | debug (desarrollo) | qa (verificación) | release (normal) |
+| --- | --- | --- | --- |
+| `applicationId` | `com.example.pagaya.dev` (`applicationIdSuffix = ".dev"`) | `com.example.pagaya.qa` (`initWith(debug)`, sufijo `.qa`) | `com.example.pagaya` |
+| Nombre visible | «Paga Ya! Dev» (`app/src/debug/res/values/strings.xml`) | «Paga Ya! QA» (`app/src/qa/res/values/strings.xml`) | «Paga Ya!» |
+| Depurable | Sí | Sí | No |
+| Firma | Clave debug local | Clave debug local | **Ninguna**: `app-release-unsigned.apk`. Sin firma de distribución (VP-05) |
+| Pruebas instrumentadas | Sí: `testBuildType = "debug"` | No | No |
+| Uso | Desarrollo diario; puede tener datos de la usuaria | Comprobaciones manuales con **solo datos sintéticos** cuando una prueba saca datos de la app (exportar, y luego restaurar). No se desinstala sin decisión explícita | Distribución futura |
 
 - `namespace` (`com.example.pagaya`), los paquetes Kotlin y el nombre `pagaya.db` no cambian. El aislamiento viene del `applicationId`: Android asigna a cada `applicationId` su propio directorio de datos, y `pagaya.db` vive en el `databases/` de ese directorio.
 - El identificador base `com.example.pagaya` sigue siendo **provisional**. No se configuró OAuth ni firma de distribución.
@@ -75,6 +76,10 @@ Esto explica de forma más concreta el incidente del 2026-10-07 ([12](12_Arranqu
 Consecuencia: Android Studio, una terminal de Windows normal u otro agente pueden necesitar uno de estos cambios, a decidir por el propietario:
 - un `sdk.dir` que apunte a la ruta física;
 - un SDK instalado fuera de la virtualización.
+
+**Comprobación desde Codex, 2026-10-16 (revisión correctiva de iteración 08):** la ruta nominal `C:\Users\lionb\AppData\Local\Android\Sdk` no existe en su vista del disco; la ruta física MSIX indicada arriba sí se puede leer. Se ajustó solo el `sdk.dir` de `local.properties` a la ruta física, conservando el archivo ignorado por Git. No se reinstaló el SDK ni se cambiaron versiones. Gradle requirió acceso fuera del sandbox a su caché local y al SDK; se usó un daemon nuevo de un solo uso (`--no-daemon`).
+
+Se confirmó por ADB el Motorola moto g84 5G (API 35) y los paquetes `.dev` y `.qa`; la variante normal no estaba instalada. Se usa exclusivamente `install -r` y `am instrument`, nunca `connectedDebugAndroidTest` ni `pm clear`. Las cargas de medición viven en bases aleatorias `test-*.db`, con temporales `cache/test-*`, y se borran al terminar cada prueba. No se cargan en `pagaya.db`, ni en Dev ni en QA. Ver resultados y huellas de conservación de Dev en doc 19.
 
 ## Comandos comprobados
 

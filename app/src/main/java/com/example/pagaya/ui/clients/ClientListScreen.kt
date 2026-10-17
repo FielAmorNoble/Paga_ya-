@@ -61,6 +61,7 @@ fun ClientListScreen(
     onOpenClient: (String) -> Unit,
     onNewClient: () -> Unit,
     onOpenArchived: () -> Unit,
+    onOpenBackup: () -> Unit,
     /** Nombre del cliente que la cuenta acaba de archivar; `null` si no hay aviso. */
     archivedClient: String?,
     onArchivedClientShown: () -> Unit,
@@ -97,7 +98,7 @@ fun ClientListScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f).padding(top = 8.dp).semantics { heading() },
                 )
-                ListMenu(onOpenArchived)
+                ListMenu(onOpenArchived, onOpenBackup)
             }
             SearchField(query, viewModel::onQueryChange)
             ClientListBody(
@@ -125,9 +126,9 @@ fun ClientListScreen(
     }
 }
 
-/** Menú secundario de la lista (docs/06): hoy solo «Archivados». */
+/** Menú secundario de la lista (docs/06): «Archivados» y «Respaldo». */
 @Composable
-private fun ListMenu(onOpenArchived: () -> Unit) {
+private fun ListMenu(onOpenArchived: () -> Unit, onOpenBackup: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }, modifier = Modifier.size(48.dp)) {
@@ -139,6 +140,14 @@ private fun ListMenu(onOpenArchived: () -> Unit) {
                 onClick = {
                     expanded = false
                     onOpenArchived()
+                },
+                modifier = Modifier.heightIn(min = 48.dp),
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.backup_title)) },
+                onClick = {
+                    expanded = false
+                    onOpenBackup()
                 },
                 modifier = Modifier.heightIn(min = 48.dp),
             )

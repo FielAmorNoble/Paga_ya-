@@ -9,6 +9,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pagaya.data.local.MovementType
+import com.example.pagaya.ui.backup.BackupScreen
 import com.example.pagaya.ui.clients.ArchivedClientListScreen
 import com.example.pagaya.ui.clients.ClientDetailScreen
 import com.example.pagaya.ui.clients.ClientFormScreen
@@ -27,6 +28,7 @@ private object Routes {
     const val CLIENTS = "clients"
     const val NEW_CLIENT = "clients/new"
     const val ARCHIVED = "clients/archived"
+    const val BACKUP = "backup"
     const val CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}"
     const val EDIT_CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}/edit"
     const val MOVEMENT = "movement/{${MovementDetailViewModel.MOVEMENT_ID_ARG}}"
@@ -61,6 +63,7 @@ fun PagaYaNavHost() {
                 onOpenClient = { navController.navigate(Routes.client(it)) },
                 onNewClient = { navController.navigate(Routes.NEW_CLIENT) },
                 onOpenArchived = { navController.navigate(Routes.ARCHIVED) { launchSingleTop = true } },
+                onOpenBackup = { navController.navigate(Routes.BACKUP) { launchSingleTop = true } },
                 archivedClient = archivedClient,
                 onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
             )
@@ -73,6 +76,9 @@ fun PagaYaNavHost() {
                 archivedClient = archivedClient,
                 onArchivedClientShown = { entry.savedStateHandle[ARCHIVED_CLIENT] = null },
             )
+        }
+        composable(Routes.BACKUP) {
+            BackupScreen(onBack = { navController.popBackStack() })
         }
         composable(Routes.NEW_CLIENT) {
             ClientFormScreen(

@@ -283,4 +283,32 @@
     <string name="annul_error_version">Este movimiento cambió desde que lo abriste. Cierra este aviso, revísalo y vuelve a intentarlo.</string>
     <string name="annul_error_already">Este movimiento ya está anulado.</string>
     <string name="annul_error_unavailable">No se pudo anular este movimiento. Vuelve a la cuenta y revisa.</string>
+    <!-- Respaldo -->
+    <string name="backup_title">Respaldo</string>
+    <string name="backup_save_file">Guardar copia en archivo</string>
+    <string name="backup_never">Todavía no has guardado ninguna copia en archivo.</string>
+    <string name="backup_last_file">Última copia guardada en archivo</string>
+    <string name="backup_captured_at">Con las cuentas del %1$s</string>
+    <string name="backup_up_to_date">La copia incluye todos los cambios.</string>
+    <string name="backup_unsaved_changes">Hay cambios sin respaldar</string>
+    <string name="backup_status_error">No pudimos leer el estado de las copias.</string>
+    <string name="backup_preparing">Preparando la copia…</string>
+    <string name="backup_choosing">Elige dónde guardar el archivo…</string>
+    <string name="backup_writing">Guardando la copia en el archivo elegido…</string>
+    <string name="backup_verifying">Comprobando la copia guardada…</string>
+    <string name="backup_saved">Copia guardada y comprobada</string>
+    <string name="backup_saved_detail">El archivo se volvió a leer y está completo.</string>
+    <string name="backup_ok">Entendido</string>
+    <string name="backup_retry_other_place">Elegir otra ubicación</string>
+    <string name="backup_failed_kept">Tus cuentas no cambiaron y la última copia comprobada se conserva.</string>
+    <string name="backup_error_preparation">No se pudo preparar la copia. Inténtalo de nuevo.</string>
+    <string name="backup_error_too_large">La libreta supera el tamaño máximo de una copia. Pide ayuda para revisarla.</string>
+    <string name="backup_error_expired">La copia preparada ya no está disponible. Toca «Guardar copia en archivo» otra vez.</string>
+    <string name="backup_error_write">No se pudo guardar la copia en el archivo elegido. Ese archivo puede haber quedado incompleto: no lo uses como copia.</string>
+    <string name="backup_error_unconfirmed">Se escribió el archivo, pero no se pudo volver a leer para comprobarlo. La copia no está confirmada: no la uses como copia.</string>
+    <string name="backup_error_verification">El archivo guardado no coincide con la copia preparada. No lo uses como copia.</string>
+    <string name="backup_error_interrupted">La copia anterior no terminó de guardarse. Vuelve a intentarlo.</string>
+    <string name="backup_privacy">Esta copia contiene los nombres, teléfonos y cuentas de tus clientes. Guárdala en un lugar privado y no la compartas.</string>
+    <string name="backup_outside_phone">Una copia guardada solo en este teléfono no te protege si lo pierdes o se daña. Guarda también una copia fuera de él, por ejemplo en tu computador o en una memoria.</string>
+    <string name="backup_cloud_note">Guardar en una carpeta de este teléfono funciona sin Internet. Si eliges una carpeta en la nube, puede necesitar conexión.</string>
 </resources>

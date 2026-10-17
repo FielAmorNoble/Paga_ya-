@@ -201,7 +201,10 @@ class MovementViewModelsTest {
         awaitValue("pago guardado") { vm.paymentSaved.value.takeIf { it } }
         assertEquals(PayFullState.Hidden, vm.payFull.value)
         assertEquals(2L, movementCount())
-        val loaded = awaitValue("saldo cero") { (vm.state.value as? ClientDetailState.Loaded)?.takeIf { it.account.balanceCop == 0L } }
+        // Cuenta e historial son flujos distintos: el saldo puede llegar antes que la segunda fila.
+        val loaded = awaitValue("saldo cero e historial actualizado") {
+            (vm.state.value as? ClientDetailState.Loaded)?.takeIf { it.account.balanceCop == 0L && it.history.size == 2 }
+        }
         assertEquals(MovementOrigin.PAGO_TOTAL, loaded.history.first().entry.origin)
         assertEquals(0L, loaded.history.first().balanceAfterCop)
     }

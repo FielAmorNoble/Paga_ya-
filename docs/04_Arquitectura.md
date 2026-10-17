@@ -66,7 +66,7 @@ Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Ko
 | Navegación | Navigation Compose estable | Rutas por ID; no transportar entidades completas |
 | Estado | ViewModel, StateFlow y corrutinas | Observación local y operaciones fuera del hilo UI |
 | Persistencia | Room + SQLite del dispositivo inicialmente | SQL controlado y migraciones probables con herramientas oficiales |
-| JSON | kotlinx.serialization | Contrato tipado y versionado de exportación |
+| JSON | `StrictJsonReader` y escritor mínimo propios para respaldo; `SnapshotJson` para revisiones | UTF-8 estricto, límites por campo, rechazo de claves duplicadas y profundidad limitada; sin dependencia ni plugin nuevos |
 | Integridad/archivo | SHA-256 y ZIP del runtime Java/Android | Sin librería criptográfica o compresor adicionales |
 | Drive | Google Identity Services AuthorizationClient + API REST v3 | Acceso limitado solo al respaldo, sin servidor |
 | HTTP | Un único cliente mantenido, preferentemente OkHttp | Cancelación, timeouts y subida; justificar/fijar versión en fase 0 |
@@ -75,6 +75,14 @@ Inyección por constructores y un contenedor pequeño de aplicación. No Hilt/Ko
 No se fijan versiones numéricas basadas en memoria. En fase 0 seleccionar versiones estables compatibles de Android Studio/JDK/AGP/Gradle/Kotlin/Compose/Room/KSP, registrar catálogo y wrapper, y construir una prueba mínima. Propuesta de compatibilidad: Android 8/API 26 en adelante, sujeta al teléfono y a los mínimos de esas versiones; no elevar el mínimo silenciosamente. `compileSdk` y `targetSdk` se fijan según soporte y requisitos vigentes de distribución.
 
 SQLite del sistema puede variar entre versiones Android: evitar SQL reciente sin comprobar compatibilidad. El acumulado cronológico puede calcularse con Kotlin sobre la consulta ordenada, sin exigir funciones de ventana. Room y todas las migraciones se prueban en la API mínima y en una reciente. Si una versión elegida exige otro driver, evaluar el costo y documentarlo, no añadirlo automáticamente.
+
+### JSON del respaldo: decisión implementada en la iteración 08
+
+Se sustituye la propuesta de `kotlinx.serialization` para este contrato cerrado. `StrictJsonReader` permite rechazar una cadena durante su lectura, contar puntos de código Unicode, limitar profundidad y detectar claves duplicadas antes de construir una fila. `BackupValidator` comprueba después tipos, claves exactas, relaciones e historial. `JsonOut` escribe el contrato compacto; `SnapshotJson` conserva el formato canónico anterior de las revisiones. No se generalizan estos lectores para otros usos.
+
+El costo es mantener un analizador propio: gramática, escapes ASCII, UTF-8 inválido, pares sustitutos, límites, lectura anticipada de los búferes y compatibilidad entre JVM y Android requieren regresiones. También hay dos lectores que revisar si cambia el contrato de snapshots. Las pruebas incluyen cadenas virtuales enormes sin materializarlas, Unicode en los límites, ZIP manipulado y archivos históricos sintéticos. Cualquier extensión debe actualizar contrato y pruebas; reconsiderar una biblioteca si reduce este costo conservando las mismas comprobaciones. Esta decisión no supone que una biblioteca general sea incapaz de implementarlas.
+
+La lectura y escritura son por streaming de bytes/caracteres, pero la captura Room y la validación **conservan listas de filas en memoria** para comprobar relaciones e historial. No se promete memoria constante. Las listas de captura dejan de estar referenciadas antes de validar; el GC decide cuándo libera su memoria. Las mediciones y su alcance están en [19 — Respaldo en archivo](19_Respaldo_Archivo.md).
 
 ## Estructura del repositorio
 

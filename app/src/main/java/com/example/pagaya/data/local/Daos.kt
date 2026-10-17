@@ -43,6 +43,10 @@ interface ClientDao {
 
     @Query("SELECT COUNT(*) FROM cliente WHERE nombre_busqueda = :searchName AND id != :excludeId")
     fun countWithSearchName(searchName: String, excludeId: String): Int
+
+    /** Todos los clientes, activos y archivados: solo para la captura del respaldo, dentro de su transacción. */
+    @Query("SELECT * FROM cliente")
+    fun all(): List<ClientEntity>
 }
 
 @Dao
@@ -81,6 +85,10 @@ interface MovementDao {
     @Transaction
     @Query("SELECT * FROM movimiento WHERE id = :id")
     fun observeWithRevisions(id: String): Flow<MovementWithRevisions?>
+
+    /** Todos los movimientos, vigentes y anulados: solo para la captura del respaldo. */
+    @Query("SELECT * FROM movimiento")
+    fun all(): List<MovementEntity>
 }
 
 @Dao
@@ -97,12 +105,19 @@ interface MovementRevisionDao {
 
     @Query("SELECT * FROM movimiento_revision WHERE id = :id")
     fun findById(id: String): MovementRevisionEntity?
+
+    /** Todas las revisiones: solo para la captura del respaldo. */
+    @Query("SELECT * FROM movimiento_revision")
+    fun all(): List<MovementRevisionEntity>
 }
 
 @Dao
 interface LedgerMetadataDao {
     @Query("SELECT * FROM libreta_metadata WHERE id = 1")
     fun get(): LedgerMetadataEntity?
+
+    @Query("SELECT * FROM libreta_metadata WHERE id = 1")
+    fun observe(): Flow<LedgerMetadataEntity?>
 
     @Update
     fun update(metadata: LedgerMetadataEntity): Int
@@ -126,4 +141,49 @@ interface BackupRecordDao {
 
     @Query("SELECT * FROM backup_registro WHERE backup_id = :backupId AND destino = :destination")
     fun find(backupId: String, destination: BackupDestination): BackupRecordEntity?
+
+    @Query("SELECT * FROM backup_registro WHERE estado = 'PREPARANDO' AND destino = :destination")
+    fun findPreparing(destination: BackupDestination): List<BackupRecordEntity>
+
+    /** Última copia verificada de esta libreta y esta época local en [destination]. */
+    @Query(
+        "SELECT * FROM backup_registro WHERE estado = 'VERIFICADO' AND destino = :destination " +
+            "AND libreta_id = :ledgerId AND epoca_local = :localEpoch " +
+            "ORDER BY verificado_en DESC, capturado_en DESC, backup_id DESC LIMIT 1",
+    )
+    fun observeLatestVerified(destination: BackupDestination, ledgerId: String, localEpoch: String): Flow<BackupRecordEntity?>
+
+    /**
+     * Mayor revisión cubierta por una copia verificada de esta libreta y época. Dentro de una época la
+     * revisión solo crece, así que la libreta está respaldada si y solo si este valor es la revisión actual.
+     */
+    @Query(
+        "SELECT MAX(revision_datos) FROM backup_registro WHERE estado = 'VERIFICADO' AND destino = :destination " +
+            "AND libreta_id = :ledgerId AND epoca_local = :localEpoch",
+    )
+    fun observeMaxVerifiedRevision(destination: BackupDestination, ledgerId: String, localEpoch: String): Flow<Long?>
+
+    /**
+     * Tamaño de la libreta antes de capturarla: filas y bytes UTF-8 de los textos variables. Solo para
+     * rechazar una captura demasiado grande sin cargar sus filas en memoria; va dentro de la transacción.
+     */
+    @Query(
+        "SELECT (SELECT COUNT(*) FROM cliente) AS clientes, " +
+            "(SELECT COUNT(*) FROM movimiento) AS movimientos, " +
+            "(SELECT COUNT(*) FROM movimiento_revision) AS revisiones, " +
+            "(SELECT COALESCE(SUM(length(CAST(nombre AS BLOB)) + COALESCE(length(CAST(telefono AS BLOB)), 0) + " +
+            "COALESCE(length(CAST(nota AS BLOB)), 0)), 0) FROM cliente) + " +
+            "(SELECT COALESCE(SUM(COALESCE(length(CAST(descripcion AS BLOB)), 0)), 0) FROM movimiento) + " +
+            "(SELECT COALESCE(SUM(length(CAST(estado_anterior_json AS BLOB)) + length(CAST(motivo AS BLOB))), 0) " +
+            "FROM movimiento_revision) AS bytes_texto",
+    )
+    fun measureLedger(): LedgerSize
 }
+
+/** Resultado de [BackupRecordDao.measureLedger]. */
+data class LedgerSize(
+    @androidx.room.ColumnInfo(name = "clientes") val clients: Long,
+    @androidx.room.ColumnInfo(name = "movimientos") val movements: Long,
+    @androidx.room.ColumnInfo(name = "revisiones") val revisions: Long,
+    @androidx.room.ColumnInfo(name = "bytes_texto") val textBytes: Long,
+)
