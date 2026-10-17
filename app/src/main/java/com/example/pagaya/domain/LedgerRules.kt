@@ -13,10 +13,18 @@ data class LedgerEntry(
     val origin: MovementOrigin,
     val amountCop: Long,
     val description: String?,
+    /** Un movimiento anulado se muestra pero no participa en el saldo ni en los prefijos. */
+    val active: Boolean = true,
+    val version: Long = 1,
+    val createdAtMillis: Long = 0,
+    val modifiedAtMillis: Long = 0,
 )
 
-/** Un movimiento con el saldo de la cuenta inmediatamente después de aplicarlo. */
-data class HistoryRow(val entry: LedgerEntry, val balanceAfterCop: Long)
+/**
+ * Un movimiento con el saldo de la cuenta inmediatamente después de aplicarlo. [balanceAfterCop] es
+ * `null` en un movimiento anulado: no participa en el cálculo, así que no tiene saldo resultante.
+ */
+data class HistoryRow(val entry: LedgerEntry, val balanceAfterCop: Long?)
 
 sealed interface HistoryCheck {
     data class Valid(val finalBalanceCop: Long) : HistoryCheck
@@ -40,6 +48,12 @@ sealed interface HistoryRejection {
      * [atNewEntry] distingue si falla el propio movimiento o un abono posterior ya registrado.
      */
     data class NegativeAtDate(val atNewEntry: Boolean) : HistoryRejection
+
+    /**
+     * Corregir o anular dejaría este [abono] sin deuda suficiente que cubrir. Nunca es un fiado: el
+     * primer saldo negativo de un historial solo puede aparecer al aplicar un abono.
+     */
+    data class UncoveredAbono(val abono: LedgerEntry) : HistoryRejection
 
     data object Overflow : HistoryRejection
 }
@@ -98,16 +112,56 @@ object LedgerRules {
     }
 
     /**
-     * Historial para mostrar: del más reciente al más antiguo, con el saldo resultante de cada
-     * movimiento calculado sobre el historial vigente. Lanza [ArithmeticException] si desborda.
+     * Historial para mostrar: del más reciente al más antiguo. Los movimientos vigentes llevan el
+     * saldo resultante, calculado solo con los vigentes; los anulados aparecen en su lugar, sin saldo.
+     * Lanza [ArithmeticException] si desborda.
      */
     fun historyRecentFirst(entries: List<LedgerEntry>): List<HistoryRow> {
         var balance = 0L
         return inCalculationOrder(entries)
             .map { entry ->
-                balance = Math.addExact(balance, contribution(entry))
-                HistoryRow(entry, balance)
+                if (entry.active) {
+                    balance = Math.addExact(balance, contribution(entry))
+                    HistoryRow(entry, balance)
+                } else {
+                    HistoryRow(entry, null)
+                }
             }
             .asReversed()
     }
+
+    /**
+     * Comprueba si sustituir un movimiento por [changed] (mismo `id`, importe o fecha corregidos)
+     * deja un historial válido. [existing] es el historial vigente con el estado anterior incluido.
+     * Devuelve `null` si es válido.
+     */
+    fun rejectionForChange(existing: List<LedgerEntry>, changed: LedgerEntry): HistoryRejection? {
+        val others = existing.filter { it.id != changed.id }
+        if (changed.type == MovementType.ABONO) {
+            val available = try {
+                balance(others)
+            } catch (e: ArithmeticException) {
+                return HistoryRejection.Overflow
+            }
+            if (available <= 0) return HistoryRejection.NoDebt
+            if (changed.amountCop > available) return HistoryRejection.ExceedsBalance(available)
+        }
+        return rejectionFrom(others + changed, changed.id)
+    }
+
+    /** Comprueba si anular el movimiento [removedId] deja un historial válido. */
+    fun rejectionForRemoval(existing: List<LedgerEntry>, removedId: String): HistoryRejection? =
+        rejectionFrom(existing.filter { it.id != removedId }, editedId = null)
+
+    private fun rejectionFrom(entries: List<LedgerEntry>, editedId: String?): HistoryRejection? =
+        when (val result = check(entries)) {
+            is HistoryCheck.Valid -> null
+            HistoryCheck.Overflow -> HistoryRejection.Overflow
+            is HistoryCheck.NegativeBalance ->
+                if (result.entryId == editedId) {
+                    HistoryRejection.NegativeAtDate(atNewEntry = true)
+                } else {
+                    HistoryRejection.UncoveredAbono(entries.first { it.id == result.entryId })
+                }
+        }
 }

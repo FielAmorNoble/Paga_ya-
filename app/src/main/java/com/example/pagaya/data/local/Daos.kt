@@ -3,6 +3,7 @@ package com.example.pagaya.data.local
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -51,8 +52,20 @@ interface MovementDao {
     @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId AND activo = 1 ORDER BY fecha, orden_registro")
     fun findActiveByClient(clientId: String): List<MovementEntity>
 
-    @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId AND activo = 1 ORDER BY fecha, orden_registro")
-    fun observeActiveByClient(clientId: String): Flow<List<MovementEntity>>
+    /** Todos los movimientos de la cuenta, vigentes y anulados: el historial muestra también los anulados. */
+    @Query("SELECT * FROM movimiento WHERE cliente_id = :clientId ORDER BY fecha, orden_registro")
+    fun observeByClient(clientId: String): Flow<List<MovementEntity>>
+
+    @Query("SELECT * FROM movimiento WHERE id = :id")
+    fun observeById(id: String): Flow<MovementEntity?>
+
+    /**
+     * El movimiento y sus revisiones en una sola lectura transaccional observable: nunca un movimiento
+     * en una versión con las revisiones de otra. Se vuelve a emitir cuando cambia cualquiera de las dos tablas.
+     */
+    @Transaction
+    @Query("SELECT * FROM movimiento WHERE id = :id")
+    fun observeWithRevisions(id: String): Flow<MovementWithRevisions?>
 }
 
 @Dao
@@ -62,6 +75,13 @@ interface MovementRevisionDao {
 
     @Query("SELECT * FROM movimiento_revision WHERE movimiento_id = :movementId ORDER BY version_anterior")
     fun findByMovement(movementId: String): List<MovementRevisionEntity>
+
+    /** La revisión que guardó el estado de [previousVersion] (la que cambió esa versión por la siguiente). */
+    @Query("SELECT * FROM movimiento_revision WHERE movimiento_id = :movementId AND version_anterior = :previousVersion")
+    fun findByPreviousVersion(movementId: String, previousVersion: Long): MovementRevisionEntity?
+
+    @Query("SELECT * FROM movimiento_revision WHERE id = :id")
+    fun findById(id: String): MovementRevisionEntity?
 }
 
 @Dao

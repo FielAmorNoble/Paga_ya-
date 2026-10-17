@@ -1,5 +1,6 @@
 package com.example.pagaya.domain
 
+import com.example.pagaya.data.local.MovementOrigin
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -34,6 +35,8 @@ enum class DateError { TOO_OLD, FUTURE }
 
 enum class DescriptionError { TOO_LONG }
 
+enum class ReasonError { REQUIRED, TOO_LONG }
+
 sealed interface AmountParse {
     data class Valid(val amountCop: Long) : AmountParse
 
@@ -50,6 +53,12 @@ sealed interface MovementValidation {
     ) : MovementValidation
 }
 
+/** Corrección tal como la escribe la usuaria: importe, fecha y descripción nuevos y un motivo. */
+data class CorrectionInput(val amount: String, val date: LocalDate, val description: String, val reason: String)
+
+/** Valores corregidos válidos. [reason] ya está recortado, entre 1 y 300 caracteres. */
+data class ValidCorrection(val movement: ValidMovement, val reason: String)
+
 /**
  * Reglas de importe, fecha y descripción de un movimiento (RN-02, RN-03, RN-11; docs/03 y 06).
  * Kotlin puro y aritmética entera: no usa `Float` ni `Double`.
@@ -58,6 +67,7 @@ object MovementRules {
     const val AMOUNT_MIN = 1L
     const val AMOUNT_MAX = 999_999_999L
     const val DESCRIPTION_MAX = 1000
+    const val REASON_MAX = 300
 
     /** Fecha económica más antigua admitida. */
     val MIN_DATE: LocalDate = LocalDate.of(1900, 1, 1)
@@ -126,6 +136,23 @@ object MovementRules {
             MovementValidation.Invalid(amountError, dateError, descriptionError)
         }
     }
+
+    /** Motivo de una corrección o anulación: obligatorio, recortado, 1–300 caracteres Unicode (docs/03). */
+    fun validateReason(reason: String): ReasonError? {
+        val trimmed = reason.trim()
+        return when {
+            trimmed.isEmpty() -> ReasonError.REQUIRED
+            trimmed.codePointCount(0, trimmed.length) > REASON_MAX -> ReasonError.TOO_LONG
+            else -> null
+        }
+    }
+
+    /**
+     * Origen tras corregir el importe: editar el importe de un pago completo lo convierte en un abono
+     * manual (docs/03). Cambiar solo la fecha o la nota no altera el origen.
+     */
+    fun originAfterCorrection(origin: MovementOrigin, oldAmountCop: Long, newAmountCop: Long): MovementOrigin =
+        if (origin == MovementOrigin.PAGO_TOTAL && oldAmountCop != newAmountCop) MovementOrigin.MANUAL else origin
 
     private fun invalid(error: AmountError) = AmountParse.Invalid(error)
 }

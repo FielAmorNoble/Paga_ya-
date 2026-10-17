@@ -1,6 +1,7 @@
 package com.example.pagaya.ui.clients
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,7 +51,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -78,6 +81,7 @@ import java.time.Instant
 fun ClientDetailScreen(
     onEdit: (clientId: String) -> Unit,
     onNewMovement: (clientId: String, type: MovementType) -> Unit,
+    onOpenMovement: (movementId: String) -> Unit,
     onBack: () -> Unit,
     /** Tipo del movimiento recién guardado por el formulario ([MovementType.name]); `null` si no hay aviso. */
     savedMovement: String?,
@@ -162,6 +166,7 @@ fun ClientDetailScreen(
                     account = current.account,
                     history = current.history,
                     onPayFull = viewModel::startPayFull,
+                    onOpenMovement = onOpenMovement,
                     // Con la barra inferior, el Scaffold ya reserva la barra de navegación.
                     reserveNavigationBar = !current.account.client.active,
                 )
@@ -208,6 +213,7 @@ private fun AccountContent(
     account: ClientWithAccount,
     history: List<HistoryRow>,
     onPayFull: () -> Unit,
+    onOpenMovement: (String) -> Unit,
     reserveNavigationBar: Boolean,
 ) {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 16.dp)) {
@@ -239,7 +245,7 @@ private fun AccountContent(
             }
         }
         items(history, key = { it.entry.id }) { row ->
-            HistoryItem(row)
+            HistoryItem(row, onClick = { onOpenMovement(row.entry.id) })
             HorizontalDivider()
         }
         if (reserveNavigationBar) item(key = "nav-space") { Spacer(Modifier.navigationBarsPadding()) }
@@ -248,8 +254,11 @@ private fun AccountContent(
 
 @Composable
 private fun BalanceCard(account: ClientWithAccount) {
+    val noActiveText = stringResource(
+        if (account.totalMovementCount > 0) R.string.account_no_active_movements else R.string.account_no_movements,
+    )
     val description = when {
-        account.activeMovementCount == 0 -> stringResource(R.string.account_no_movements)
+        account.activeMovementCount == 0 -> noActiveText
         account.balanceCop == 0L -> stringResource(R.string.detail_paid_description)
         else -> stringResource(R.string.detail_balance_description, formatCop(account.balanceCop))
     }
@@ -261,7 +270,7 @@ private fun BalanceCard(account: ClientWithAccount) {
             Text(stringResource(R.string.detail_balance_label), style = MaterialTheme.typography.labelLarge)
             if (account.activeMovementCount == 0) {
                 // Una cuenta sin movimientos vigentes no es una cuenta pagada.
-                Text(stringResource(R.string.account_no_movements), style = MaterialTheme.typography.headlineSmall)
+                Text(noActiveText, style = MaterialTheme.typography.headlineSmall)
             } else {
                 Text(
                     formatCop(account.balanceCop),
@@ -282,9 +291,10 @@ private fun BalanceCard(account: ClientWithAccount) {
 }
 
 @Composable
-private fun HistoryItem(row: HistoryRow) {
+private fun HistoryItem(row: HistoryRow, onClick: () -> Unit) {
     val entry = row.entry
     val isPayment = entry.type == MovementType.ABONO
+    val annulled = !entry.active
     val label = stringResource(
         when {
             !isPayment -> R.string.history_fiado
@@ -292,47 +302,80 @@ private fun HistoryItem(row: HistoryRow) {
             else -> R.string.history_abono
         },
     )
+    // Un movimiento anulado no es un abono vigente: sin ✓, sin relleno y con el texto «Anulado».
+    val shownLabel = if (annulled) stringResource(R.string.history_label_annulled, label.removePrefix("✓ ")) else label
     val amount = formatSignedCop(entry.amountCop, positive = !isPayment)
-    val balanceAfter = formatCop(row.balanceAfterCop)
-    val spoken = stringResource(
-        when {
-            !isPayment -> R.string.history_a11y_fiado
-            entry.origin == MovementOrigin.PAGO_TOTAL -> R.string.history_a11y_payment
-            else -> R.string.history_a11y_abono
-        },
-        formatCop(entry.amountCop).removePrefix("$"),
-        formatDayLong(entry.date),
-        balanceAfter.removePrefix("$"),
-    ) + entry.description?.let { " " + stringResource(R.string.history_a11y_note, it) }.orEmpty()
+    val balanceAfter = row.balanceAfterCop?.let(::formatCop)
+    val edited = entry.version > 1
+    val spoken = if (annulled) {
+        stringResource(
+            if (isPayment) R.string.history_a11y_annulled_abono else R.string.history_a11y_annulled_fiado,
+            formatCop(entry.amountCop).removePrefix("$"),
+            formatDayLong(entry.date),
+        )
+    } else {
+        stringResource(
+            when {
+                !isPayment -> R.string.history_a11y_fiado
+                entry.origin == MovementOrigin.PAGO_TOTAL -> R.string.history_a11y_payment
+                else -> R.string.history_a11y_abono
+            },
+            formatCop(entry.amountCop).removePrefix("$"),
+            formatDayLong(entry.date),
+            balanceAfter.orEmpty().removePrefix("$"),
+        )
+    } + entry.description?.let { " " + stringResource(R.string.history_a11y_note, it) }.orEmpty() +
+        (if (edited) " " + stringResource(R.string.history_a11y_edited) else "") +
+        " " + stringResource(R.string.history_a11y_open)
 
-    // El abono se distingue por ✓, texto, signo menos y un fondo suave, no solo por el color.
-    val tint = if (isPayment) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface
+    // El abono vigente se distingue por ✓, texto, signo menos y un fondo suave, no solo por el color.
+    val tint = when {
+        annulled -> MaterialTheme.colorScheme.surface
+        isPayment -> MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
     Column(
         Modifier
             .fillMaxWidth()
             .background(tint)
+            .clickable(onClick = onClick, onClickLabel = stringResource(R.string.history_open_label))
             .semantics(mergeDescendants = true) { contentDescription = spoken }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Text(formatDayShort(entry.date), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(formatDayShort(entry.date), style = MaterialTheme.typography.labelLarge, color = muted)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(end = 12.dp))
+            Text(
+                shownLabel,
+                style = MaterialTheme.typography.titleMedium,
+                color = if (annulled) muted else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f).padding(end = 12.dp),
+            )
             Text(
                 amount,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (isPayment) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                fontWeight = if (annulled) FontWeight.Normal else FontWeight.Bold,
+                // El importe anulado se tacha pero sigue legible como referencia.
+                textDecoration = if (annulled) TextDecoration.LineThrough else null,
+                color = when {
+                    annulled -> muted
+                    isPayment -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
             )
         }
         entry.description?.let {
-            Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(it, style = MaterialTheme.typography.bodyMedium, color = if (annulled) muted else Color.Unspecified, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Text(
-            stringResource(R.string.history_balance_after, balanceAfter),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (balanceAfter != null) {
+            Text(stringResource(R.string.history_balance_after, balanceAfter), style = MaterialTheme.typography.bodyMedium, color = muted)
+        } else {
+            Text(stringResource(R.string.history_annulled_note), style = MaterialTheme.typography.bodyMedium, color = muted)
+        }
+        if (edited) {
+            Text(stringResource(R.string.history_edited), style = MaterialTheme.typography.labelMedium, color = muted)
+        }
     }
 }
 

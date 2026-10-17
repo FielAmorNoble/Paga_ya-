@@ -18,6 +18,7 @@
 
     <!-- Estado de cuenta derivado de los movimientos vigentes -->
     <string name="account_no_movements">Sin movimientos</string>
+    <string name="account_no_active_movements">Sin movimientos vigentes</string>
     <string name="account_owes">Debe: %1$s</string>
     <string name="account_paid">Pagado ✓</string>
     <string name="account_inconsistent">Revisar cuenta</string>
@@ -92,6 +93,14 @@
     <string name="history_a11y_fiado">Fiado de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
     <string name="history_a11y_abono">Abono de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
     <string name="history_a11y_payment">Pago completo de %1$s pesos, %2$s. Saldo después: %3$s pesos.</string>
+    <string name="history_label_annulled">Anulado · %1$s</string>
+    <string name="history_annulled_note">Anulado · no afecta el saldo</string>
+    <string name="history_edited">Editado</string>
+    <string name="history_open_label">Ver el detalle del movimiento</string>
+    <string name="history_a11y_annulled_fiado">Fiado anulado de %1$s pesos, %2$s. No afecta el saldo.</string>
+    <string name="history_a11y_annulled_abono">Abono anulado de %1$s pesos, %2$s. No afecta el saldo.</string>
+    <string name="history_a11y_edited">Editado.</string>
+    <string name="history_a11y_open">Toca para ver el detalle.</string>
     <string name="history_a11y_note">Nota: %1$s.</string>
     <string-array name="months_short">
         <item>ene</item>
@@ -160,4 +169,91 @@
     <string name="pay_full_error_save">No se pudo guardar. Inténtalo de nuevo.</string>
     <string name="pay_full_error_dates">No se pudo registrar el pago con la fecha de hoy. Revisa las fechas de los movimientos.</string>
     <string name="pay_full_error_unavailable">No se pudo registrar el pago. Vuelve a la cuenta y revisa.</string>
+
+    <!-- Detalle del movimiento -->
+    <string name="movement_detail_title">Movimiento</string>
+    <string name="movement_detail_not_found">No encontramos este movimiento.</string>
+    <string name="movement_detail_date">Fecha</string>
+    <string name="movement_detail_description">Descripción</string>
+    <string name="movement_detail_no_description">Sin descripción</string>
+    <string name="movement_detail_status">Estado</string>
+    <string name="movement_detail_created">Registrado</string>
+    <string name="movement_detail_modified">Última modificación</string>
+    <string name="movement_detail_a11y_active">%1$s de %2$s pesos de %3$s.</string>
+    <string name="movement_detail_a11y_annulled">%1$s anulado de %2$s pesos de %3$s. No afecta el saldo.</string>
+    <string name="movement_action_correct">Corregir</string>
+    <string name="movement_action_annul">Anular</string>
+    <string name="movement_action_changes">Ver cambios</string>
+    <string name="saved_correction">Corrección guardada</string>
+    <string name="saved_annulled">Movimiento anulado</string>
+    <string name="type_fiado">Fiado</string>
+    <string name="type_abono">Abono</string>
+    <string name="type_payment">Pago completo</string>
+    <string name="type_fiado_lower">fiado</string>
+    <string name="type_abono_lower">abono</string>
+    <string name="type_payment_lower">pago completo</string>
+    <string name="status_active">Vigente</string>
+    <string name="status_annulled">Anulado</string>
+
+    <!-- Cambios de un movimiento (comparación antes → después) -->
+    <string name="change_amount">Valor: %1$s → %2$s</string>
+    <string name="change_date">Fecha: %1$s → %2$s</string>
+    <string name="change_description">Nota: %1$s → %2$s</string>
+    <string name="change_no_description">sin nota</string>
+    <string name="change_origin">Tipo: %1$s → %2$s</string>
+    <string name="change_status">Estado: %1$s → %2$s</string>
+    <string name="changes_title">Cambios del movimiento</string>
+    <string name="changes_correction">Corrección</string>
+    <string name="changes_annulment">Anulación</string>
+    <string name="changes_reason">Motivo: %1$s</string>
+    <string name="changes_original_title">Registro original</string>
+    <string name="changes_original_amount">Valor: %1$s</string>
+    <string name="changes_original_date">Fecha: %1$s</string>
+    <string name="changes_original_note">Nota: %1$s</string>
+    <string name="changes_empty">Este movimiento no tiene cambios.</string>
+    <string name="changes_error">No pudimos leer los cambios de este movimiento.</string>
+
+    <!-- Corrección -->
+    <string name="edit_title">Corregir movimiento</string>
+    <string name="edit_fixed_data">%1$s · el cliente y el tipo no se pueden cambiar</string>
+    <string name="edit_reason_label">Motivo de la corrección (obligatorio)</string>
+    <string name="edit_reason_hint">Por ejemplo: me equivoqué al escribir el valor</string>
+    <string name="edit_amount_preview">El valor quedará en %1$s</string>
+    <string name="edit_review">Revisar cambios</string>
+    <string name="edit_reviewing">Revisando…</string>
+    <string name="edit_no_changes">No hay cambios que guardar. Cambia el valor, la fecha o la nota.</string>
+    <string name="edit_confirm_title">Confirmar corrección</string>
+    <string name="edit_confirm_reason">Motivo: %1$s</string>
+    <string name="edit_confirm_balance">Nuevo saldo de %1$s: %2$s</string>
+    <string name="edit_confirm_note">Lo anterior se conserva: podrás verlo en «Ver cambios».</string>
+    <string name="edit_confirm_save">Guardar corrección</string>
+    <string name="edit_confirm_back">Seguir editando</string>
+    <string name="edit_saving">Guardando…</string>
+    <string name="reason_error_required">Escribe un motivo breve</string>
+    <plurals name="reason_error_too_long">
+        <item quantity="one">El motivo puede tener hasta %1$d carácter</item>
+        <item quantity="other">El motivo puede tener hasta %1$d caracteres</item>
+    </plurals>
+    <string name="edit_error_no_debt">Sin este abono la cuenta no tiene deuda que cubrir</string>
+    <string name="edit_error_exceeds">Este abono no puede superar lo que debe la cuenta sin él: %1$s</string>
+    <string name="edit_error_uncovered">Este cambio dejaría sin deuda suficiente al abono de %1$s del %2$s. Revisa ese abono antes de cambiar este movimiento.</string>
+    <string name="edit_error_version">Este movimiento cambió desde que lo abriste. Vuelve al detalle, revísalo y corrige de nuevo.</string>
+    <string name="edit_error_annulled">Este movimiento ya está anulado y no se puede corregir.</string>
+    <string name="edit_error_conflict">Este formulario ya guardó otro cambio. Vuelve al detalle y revisa.</string>
+    <string name="edit_error_save">No se pudo guardar. Tus datos siguen aquí; inténtalo de nuevo.</string>
+
+    <!-- Anulación -->
+    <string name="annul_title">Anular movimiento</string>
+    <string name="annul_text">Vas a anular el %1$s de %2$s del %3$s de %4$s.</string>
+    <string name="annul_balance">El saldo de %1$s quedará en %2$s.</string>
+    <string name="annul_note">El movimiento no se borra: queda en el historial como anulado y deja de contar en el saldo.</string>
+    <string name="annul_reason_label">Motivo (obligatorio)</string>
+    <string name="annul_confirm">Anular movimiento</string>
+    <string name="annul_cancel">Cancelar</string>
+    <string name="annul_saving">Anulando…</string>
+    <string name="annul_error_uncovered">No se puede anular: el abono de %1$s del %2$s quedaría sin deuda que cubrir. Revisa ese abono primero.</string>
+    <string name="annul_error_save">No se pudo anular. Inténtalo de nuevo.</string>
+    <string name="annul_error_version">Este movimiento cambió desde que lo abriste. Cierra este aviso, revísalo y vuelve a intentarlo.</string>
+    <string name="annul_error_already">Este movimiento ya está anulado.</string>
+    <string name="annul_error_unavailable">No se pudo anular este movimiento. Vuelve a la cuenta y revisa.</string>
 </resources>

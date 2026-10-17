@@ -158,7 +158,7 @@ class LedgerRulesTest {
             accepted.takeIf { it.isNotEmpty() }?.let {
                 assertEquals(check.finalBalanceCop, LedgerRules.historyRecentFirst(it).first().balanceAfterCop)
             }
-            assertTrue(LedgerRules.historyRecentFirst(accepted).all { it.balanceAfterCop >= 0 })
+            assertTrue(LedgerRules.historyRecentFirst(accepted).all { (it.balanceAfterCop ?: 0L) >= 0 })
         }
     }
 }

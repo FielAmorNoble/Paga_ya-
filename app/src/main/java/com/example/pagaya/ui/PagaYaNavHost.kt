@@ -13,7 +13,12 @@ import com.example.pagaya.ui.clients.ClientDetailScreen
 import com.example.pagaya.ui.clients.ClientFormScreen
 import com.example.pagaya.ui.clients.ClientFormViewModel
 import com.example.pagaya.ui.clients.ClientListScreen
+import com.example.pagaya.ui.clients.MovementChangesScreen
+import com.example.pagaya.ui.clients.MovementDetailScreen
+import com.example.pagaya.ui.clients.MovementDetailViewModel
+import com.example.pagaya.ui.clients.MovementEditScreen
 import com.example.pagaya.ui.clients.MovementFormScreen
+import com.example.pagaya.ui.clients.SAVED_CORRECTION
 import com.example.pagaya.ui.clients.MovementFormViewModel
 
 // Rutas por ID; nunca se transportan entidades completas (docs/04).
@@ -22,10 +27,16 @@ private object Routes {
     const val NEW_CLIENT = "clients/new"
     const val CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}"
     const val EDIT_CLIENT = "clients/{${ClientFormViewModel.CLIENT_ID_ARG}}/edit"
+    const val MOVEMENT = "movement/{${MovementDetailViewModel.MOVEMENT_ID_ARG}}"
+    const val EDIT_MOVEMENT = "movement/{${MovementDetailViewModel.MOVEMENT_ID_ARG}}/edit"
+    const val MOVEMENT_CHANGES = "movement/{${MovementDetailViewModel.MOVEMENT_ID_ARG}}/changes"
     const val NEW_MOVEMENT = "clients/{${MovementFormViewModel.CLIENT_ID_ARG}}/movements/{${MovementFormViewModel.TYPE_ARG}}"
 
     fun client(id: String) = "clients/$id"
     fun editClient(id: String) = "clients/$id/edit"
+    fun movement(id: String) = "movement/$id"
+    fun editMovement(id: String) = "movement/$id/edit"
+    fun movementChanges(id: String) = "movement/$id/changes"
     fun newMovement(id: String, type: MovementType) = "clients/$id/movements/${type.name}"
 }
 
@@ -35,6 +46,7 @@ private const val SAVED_MOVEMENT = "savedMovement"
 @Composable
 fun PagaYaNavHost() {
     val navController = rememberNavController()
+    val movementIdArg = listOf(navArgument(MovementDetailViewModel.MOVEMENT_ID_ARG) { type = NavType.StringType })
     val clientIdArg = listOf(navArgument(ClientFormViewModel.CLIENT_ID_ARG) { type = NavType.StringType })
 
     NavHost(navController = navController, startDestination = Routes.CLIENTS) {
@@ -58,6 +70,7 @@ fun PagaYaNavHost() {
             ClientDetailScreen(
                 onEdit = { navController.navigate(Routes.editClient(it)) },
                 onNewMovement = { id, type -> navController.navigate(Routes.newMovement(id, type)) { launchSingleTop = true } },
+                onOpenMovement = { navController.navigate(Routes.movement(it)) { launchSingleTop = true } },
                 onBack = { navController.popBackStack() },
                 savedMovement = savedMovement,
                 onSavedMovementShown = { entry.savedStateHandle[SAVED_MOVEMENT] = null },
@@ -68,6 +81,29 @@ fun PagaYaNavHost() {
                 onSaved = { navController.popBackStack() },
                 onBack = { navController.popBackStack() },
             )
+        }
+        composable(Routes.MOVEMENT, arguments = movementIdArg) { entry ->
+            val message by entry.savedStateHandle.getStateFlow<String?>(SAVED_MOVEMENT, null).collectAsStateWithLifecycle()
+            MovementDetailScreen(
+                onCorrect = { navController.navigate(Routes.editMovement(it)) { launchSingleTop = true } },
+                onViewChanges = { navController.navigate(Routes.movementChanges(it)) { launchSingleTop = true } },
+                onBack = { navController.popBackStack() },
+                savedMessage = message,
+                onSavedMessageShown = { entry.savedStateHandle[SAVED_MOVEMENT] = null },
+            )
+        }
+        composable(Routes.EDIT_MOVEMENT, arguments = movementIdArg) {
+            MovementEditScreen(
+                onSaved = {
+                    // El detalle es la pantalla anterior; allí se muestra «Corrección guardada».
+                    navController.previousBackStackEntry?.savedStateHandle?.set(SAVED_MOVEMENT, SAVED_CORRECTION)
+                    navController.popBackStack()
+                },
+                onBack = { navController.popBackStack() },
+            )
+        }
+        composable(Routes.MOVEMENT_CHANGES, arguments = movementIdArg) {
+            MovementChangesScreen(onBack = { navController.popBackStack() })
         }
         composable(
             Routes.NEW_MOVEMENT,

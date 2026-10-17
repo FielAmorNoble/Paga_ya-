@@ -1,6 +1,6 @@
 # 16 — Movimientos, saldo e historial básico
 
-Fecha: 2026-10-12. Iteración 05, en `develop`. Incluye el ajuste de UX «Información del cliente» (sección propia más abajo).
+Fecha: 2026-10-12. Iteración 05, en `develop`. La iteración 06 añadió detalle, corrección y anulación de movimientos: ver [17](17_Correcciones_Movimientos.md); lo que aquí figura como pendiente de HU-08 y de «Anulado» ya está implementado allí. Incluye el ajuste de UX «Información del cliente» (sección propia más abajo).
 
 **Objetivo:** abrir un cliente, registrar un fiado, registrar abonos y liquidar la deuda, viendo de inmediato el saldo y el historial, sin Internet y con persistencia al cerrar la app.
 

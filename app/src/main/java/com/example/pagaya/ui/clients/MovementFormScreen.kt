@@ -212,7 +212,7 @@ fun MovementFormScreen(
 }
 
 @Composable
-private fun DateRow(date: LocalDate, error: String?, enabled: Boolean, onClick: () -> Unit) {
+internal fun DateRow(date: LocalDate, error: String?, enabled: Boolean, onClick: () -> Unit) {
     val formatted = formatDayNumeric(date)
     val changeDescription = stringResource(R.string.movement_date_change_description, formatted)
     Column {
@@ -246,7 +246,7 @@ private fun DateRow(date: LocalDate, error: String?, enabled: Boolean, onClick: 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MovementDatePicker(selected: LocalDate, latest: LocalDate, onPicked: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+internal fun MovementDatePicker(selected: LocalDate, latest: LocalDate, onPicked: (LocalDate) -> Unit, onDismiss: () -> Unit) {
     // El selector trabaja con el día a medianoche UTC; solo se permite entre 1900-01-01 y hoy.
     fun LocalDate.toPickerMillis() = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     fun Long.toPickerDate() = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
